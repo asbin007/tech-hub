@@ -1,13 +1,14 @@
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import Navbar from "./pages/components/Navbar";
+import Home from "./pages/home/Home";
 
-import './App.css'
-
-function App() {
-
+export default function App() {
   return (
-    <>
-      <h1 className='bg-red'>helo </h1>
-    </>
-  )
+    <BrowserRouter>
+    <Navbar/>
+      <Routes>
+        <Route path="/" element={<Home />} />{" "}
+      </Routes>
+    </BrowserRouter>
+  );
 }
-
-export default App
