@@ -3,7 +3,6 @@ import type { ChangeEvent, FormEvent } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { loginUser } from "../../store/authSlice";
 import { useNavigate, Link } from "react-router-dom";
-import { Status } from "../../globals/types/types";
 
 const Login = () => {
   const dispatch = useAppDispatch();

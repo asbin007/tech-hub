@@ -67,7 +67,9 @@ export function loginUser(data: { email: string; password: string }) {
       if (res.status === 200) {
         dispatch(setUser(res.data.data));
         dispatch(setStatus(Status.SUCCESS));
-        const token = res.data.data.token;
+        const token =
+          res.data.token || res.data.session?.access_token;
+
         if (token) {
           dispatch(setToken(token));
           localStorage.setItem("token", token);
@@ -93,9 +95,7 @@ export function forgotPassword(data: { email: string; otp: string }) {
         dispatch(setStatus(Status.SUCCESS));
         alert("Check your email for a reset link.");
         dispatch(setUser(res.data.data));
-       
-      }
-      else {
+      } else {
         dispatch(setStatus(Status.ERROR));
       }
     } catch (error) {
@@ -105,7 +105,11 @@ export function forgotPassword(data: { email: string; otp: string }) {
   };
 }
 
-export function resetPassword(data: { email: string; otp: string; newPassword: string }) {
+export function resetPassword(data: {
+  email: string;
+  otp: string;
+  newPassword: string;
+}) {
   return async function resetPasswordThunk(dispatch: AppDispatch) {
     try {
       const res = await API.post("/auth/reset-password", data);

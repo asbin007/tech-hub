@@ -1,15 +1,24 @@
-
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Search, ShoppingCart, User, Menu, Truck, Headphones, Laptop, Heart } from 'lucide-react';
+import { useAppSelector } from '../../store/hooks';
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isLogin, setIsLogin] = useState(false);
+
+  const reduxToken = useAppSelector((store) => store.auth.user.token);
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     console.log('Searching for:', searchQuery);
   };
+
+  useEffect(() => {
+    const localToken = localStorage.getItem('token');
+    const loggedIn = !!reduxToken || !!localToken;
+    setIsLogin(loggedIn);
+  }, [reduxToken]);
 
   return (
     <header className="border-b bg-white/95 backdrop-blur-sm sticky top-0 z-50">
@@ -93,6 +102,26 @@ const Navbar = () => {
               <User className="h-5 w-5" aria-hidden="true" />
             </button>
 
+            {/* 👇 Login/Logout button */}
+            {isLogin ? (
+              <button
+                className="text-sm text-red-600 hover:text-red-800 font-medium"
+                onClick={() => {
+                  localStorage.removeItem('tokenauth');
+                  window.location.reload();
+                }}
+              >
+                Logout
+              </button>
+            ) : (
+              <a
+                href="/login"
+                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+              >
+                Login
+              </a>
+            )}
+
             <button
               className="relative p-2 hover:bg-gray-100 rounded-xl"
               aria-label="Wishlist with 2 items"
@@ -174,4 +203,3 @@ const Navbar = () => {
 };
 
 export default Navbar;
-
