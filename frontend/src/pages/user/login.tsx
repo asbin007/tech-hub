@@ -1,12 +1,11 @@
 import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
-import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { useAppDispatch } from "../../store/hooks";
 import { loginUser } from "../../store/authSlice";
 import { useNavigate, Link } from "react-router-dom";
 
 const Login = () => {
   const dispatch = useAppDispatch();
-  const { status } = useAppSelector((store) => store.auth);
   const navigate = useNavigate();
   const [data, setData] = useState({
     email: "",

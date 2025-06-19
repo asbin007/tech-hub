@@ -1,11 +1,11 @@
 import BrandsSection from "../components/brands-section";
 import CategoriesSection from "../components/categoreis-section";
-import FeaturedProductsSection from "../components/featured-products-section";
 import FeaturesSection from "../components/features-section";
 import Footer from "../components/footer";
 import Hero from "../components/Hero";
 import NewsletterSection from "../components/newsletter-section";
-import { brands, categories, featuredProducts } from "../datas/data";
+import { brands, categories } from "../datas/data";
+import FeaturedProductsSection from "../products/ProductFilter";
 
 const Home = () => {
   return (
@@ -13,7 +13,7 @@ const Home = () => {
       <Hero />
       <BrandsSection brands={brands} />
       <CategoriesSection categories={categories} />
-      <FeaturedProductsSection products={featuredProducts} />
+      <FeaturedProductsSection  />
       <FeaturesSection />
       <NewsletterSection />
       <Footer />
