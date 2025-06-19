@@ -1,21 +1,24 @@
-
 import { Link } from "react-router-dom";
 import type { IProduct } from "../../store/productSlice";
 
 // Redefine ICardProps to match Product model
 interface ICardProps {
   product: Omit<IProduct, "image"> & {
-    image: string[]; // Match Product model's image field
-    Category: { categoryName: string }; // Match included Category
+    image: string[]; // Image paths like "/uploads/e-shoe/filename"
+    Category: { categoryName: string };
   };
 }
 
-const ProductCard: React.FC<ICardProps> = ({ product }) => {
-  // Fallback image if product.image is empty
-  const imageUrl = product.image?.length
-  ? `https://res.cloudinary.com/dxpe7jikz/image${product.image[0]}`
-  : "https://via.placeholder.com/300x200?text=No+Image";
+const CLOUDINARY_VERSION = "v1750340657"; 
 
+const ProductCard: React.FC<ICardProps> = ({ product }) => {
+  const imageUrl =
+    product.image && product.image[0]
+      ? `https://res.cloudinary.com/dxpe7jikz/image/upload/${CLOUDINARY_VERSION}${product.image[0].replace(
+          "/uploads",
+          ""
+        )}.jpg`
+      : "https://via.placeholder.com/300x300?text=No+Image";
 
   // Calculate original price safely
   const originalPrice =

@@ -13,24 +13,24 @@ export interface IProduct {
   image: string[];
   inStock: boolean;
   isNew: boolean;
-  sizes: string[];
-  colors: string[];
+  size: string[];
+  color: string[];
   badge: string;
   discount: number;
   RAM: string[];
   ROM: string[];
-  specs: string[];
+  spec: string[];
   createdAt: string;
   updatedAt: string;
   categoryId: string;
   Category:{
     categoryName:string
   }
-  displayOptions:string[],
-  storageOptions:string[],
-  ramOptions:string[],
-  cpuOptions:string[]
+  description:string[],
+  keyFeatures:string[],
+  totalStock:number,
 
+ 
 
 }
 
