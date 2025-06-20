@@ -13,6 +13,7 @@ import ResetPassword from "./pages/user/reset-password";
 // Product Pages
 import ProductDetail from "./pages/products/ProductDetaills";
 import ProductFilters from "./pages/products/ProductFilter";
+import MyCart from "./pages/cart/MyCart";
 
 export default function App() {
   return (
@@ -31,11 +32,16 @@ export default function App() {
             <Route path="/reset-password" element={<ResetPassword />} />
 
             {/* Product Routes */}
-            <Route path="/:categoryName/:brand/:id" element={<ProductDetail />} />
+            <Route
+              path="/:categoryName/:brand/:id"
+              element={<ProductDetail />}
+            />
             <Route path="/:categoryName/:brand" element={<ProductFilters />} />
             <Route path="/all-laptops" element={<ProductFilters />} />
 
             <Route path="/:categoryName" element={<ProductFilters />} />
+
+            <Route path="/my-cart" element={<MyCart />} />
           </Routes>
         </div>
       </BrowserRouter>

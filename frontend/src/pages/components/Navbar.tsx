@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Search, ShoppingCart, Menu, Truck, Headphones, Laptop, Heart } from 'lucide-react';
+import { Search, Menu, Truck, Headphones, Laptop } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { logout } from '../../store/authSlice';
 import { Link, useNavigate } from 'react-router-dom';
@@ -12,27 +12,26 @@ const Navbar = () => {
   const [isLogin, setIsLogin] = useState(false);
 
   const reduxToken = useAppSelector((store) => store.auth.user.token);
-  const { data } = useAppSelector((store) => store.cart);
+  const { data: cartItems } = useAppSelector((store) => store.cart);
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
-  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    console.log('Searching for:', searchQuery);
-  };
 
   useEffect(() => {
     const localToken = localStorage.getItem('token');
     const loggedIn = !!reduxToken || !!localToken;
     setIsLogin(loggedIn);
-  }, [reduxToken]);
+
+    // Fetch cart items if user is logged in
+    if (loggedIn) {
+      dispatch(fetchCartItems());
+    }
+  }, [reduxToken, dispatch]);
 
   const handleCartClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    if (isLogin && data.length > 0) {
-      dispatch(fetchCartItems());
-    } else {
+    if (!isLogin) {
       e.preventDefault();
-      toast.error('No items in the cart', {
+      toast.error('Please log in to view your cart', {
         duration: 3000,
         position: 'top-center',
         style: {
@@ -43,6 +42,7 @@ const Navbar = () => {
         },
       });
     }
+    // Navigation to /my-cart happens naturally via Link
   };
 
   const handleLogout = () => {
@@ -114,7 +114,7 @@ const Navbar = () => {
 
           <div className="flex items-center gap-4">
             <form
-              onSubmit={handleSearch}
+             
               className="hidden md:flex items-center gap-2 bg-gray-50 rounded-xl px-4 py-2 w-80 border"
             >
               <Search className="h-4 w-4 text-gray-500" />
@@ -140,25 +140,31 @@ const Navbar = () => {
               </Link>
             )}
 
-            <Link to="/wishlist" className="relative p-2 hover:bg-gray-100 rounded-xl">
-              <Heart className="h-5 w-5" />
-              <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full flex items-center justify-center text-xs bg-red-500 text-white">
-                2
-              </span>
-            </Link>
+            <div className="relative">
+              <Link to="/my-cart" onClick={handleCartClick}>
+                <button className="p-2 rounded-full hover:bg-gray-100">
+                  <svg
+                    className="h-6 w-6"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+                    />
+                  </svg>
+                </button>
+              </Link>
 
-            <Link
-              to="/my-cart"
-              onClick={handleCartClick}
-              className="relative p-2 hover:bg-gray-100 rounded-xl"
-            >
-              <ShoppingCart className="h-5 w-5" />
-              {isLogin && data.length > 0 && (
-                <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full flex items-center justify-center text-xs bg-blue-600 text-white">
-                  {data.length}
+              {isLogin && cartItems.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs px-1.5 py-0.5 rounded-full">
+                  {cartItems.length}
                 </span>
               )}
-            </Link>
+            </div>
 
             <button
               className="lg:hidden p-2 hover:bg-gray-100 rounded"
@@ -172,7 +178,7 @@ const Navbar = () => {
         {/* Mobile menu */}
         <div className={`lg:hidden ${isMobileMenuOpen ? 'block' : 'hidden'}`}>
           <nav className="flex flex-col gap-4 p-4">
-            <Link to="/all" onClick={() => setIsMobileMenuOpen(false)}>
+            <Link to="/all-laptops" onClick={() => setIsMobileMenuOpen(false)}>
               All Laptops
             </Link>
             <Link to="/gaming-laptops" onClick={() => setIsMobileMenuOpen(false)}>
@@ -195,20 +201,18 @@ const Navbar = () => {
               {isLogin ? (
                 <button
                   className="text-sm text-red-600 hover:text-red-800 font-medium"
-                  onClick={() => {
-                    localStorage.removeItem('token');
-                    window.location.reload();
-                  }}
+                  onClick={handleLogout}
                 >
                   Logout
                 </button>
               ) : (
-                <a
-                  href="/login"
+                <Link
+                  to="/login"
                   className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                  onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Login
-                </a>
+                </Link>
               )}
             </div>
           </nav>

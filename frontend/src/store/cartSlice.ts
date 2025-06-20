@@ -16,9 +16,11 @@ interface IData {
   productId: string;
   userId: string;
   quantity: number;
-  Shoe: ICartItem;
+  product: ICartItem;
   size: string;
-  color: string; // Added color
+  color: string;
+  RAM:string,
+  ROM:string,
 }
 
 interface ICartUpdateItem {
@@ -48,7 +50,7 @@ const cartSlice = createSlice({
     },
     setUpdateCart(state: IInitialData, action: PayloadAction<ICartUpdateItem>) {
       const index = state.data.findIndex(
-        (item) => item.Shoe.id === action.payload.productId
+        (item) => item.product.id === action.payload.productId
       );
       if (index !== -1) {
         state.data[index].quantity = action.payload.quantity;
@@ -72,16 +74,18 @@ export const { setCart, setStatus, setUpdateCart, setDeleteCartItem } =
   cartSlice.actions;
 export default cartSlice.reducer;
 
-export function addToCart(productId: string, size: string, color: string) {
+export function addToCart(productId: string, size: string, color: string,RAM:string,ROM:string,) {
   return async function addToCartThunk(dispatch: AppDispatch) {
     try {
       const res = await APIS.post("/cart", {
         productId,
+        RAM,
+        ROM,
         size,
-        color, // Added color
+        color, 
         quantity: 1,
       });
-      if (res.status === 201) {
+      if (res.status === 200) {
         dispatch(setStatus(Status.SUCCESS));
         dispatch(setCart(res.data.data));
       } else {
@@ -100,7 +104,7 @@ export function fetchCartItems() {
   return async function fetchCartItemsThunk(dispatch: AppDispatch) {
     try {
       const response = await APIS.get("/cart");
-      if (response.status === 201) {
+      if (response.status === 200) {
         dispatch(setStatus(Status.SUCCESS));
         dispatch(setCart(response.data.data));
       } else {
@@ -117,7 +121,7 @@ export function updateCart(productId: string, quantity: number) {
   return async function updateCartThunk(dispatch: AppDispatch) {
     try {
       const res = await APIS.patch("/cart/"+ productId, {  quantity });
-      if (res.status === 201) {
+      if (res.status === 200) {
         dispatch(setStatus(Status.SUCCESS));
         dispatch(setUpdateCart({ productId, quantity }));
       } else {
