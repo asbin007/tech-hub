@@ -7,7 +7,7 @@ import { APIS } from "../globals/http";
 interface ICartItem {
   id: string;
   name: string;
-  images: string;
+  image: string;
   price: number;
 }
 
@@ -16,11 +16,11 @@ interface IData {
   productId: string;
   userId: string;
   quantity: number;
-  product: ICartItem;
+  Product: ICartItem;
   size: string;
   color: string;
-  RAM:string,
-  ROM:string,
+  RAM: string;
+  ROM: string;
 }
 
 interface ICartUpdateItem {
@@ -50,7 +50,7 @@ const cartSlice = createSlice({
     },
     setUpdateCart(state: IInitialData, action: PayloadAction<ICartUpdateItem>) {
       const index = state.data.findIndex(
-        (item) => item.product.id === action.payload.productId
+        (item) => item.Product.id === action.payload.productId
       );
       if (index !== -1) {
         state.data[index].quantity = action.payload.quantity;
@@ -74,7 +74,13 @@ export const { setCart, setStatus, setUpdateCart, setDeleteCartItem } =
   cartSlice.actions;
 export default cartSlice.reducer;
 
-export function addToCart(productId: string, size: string, color: string,RAM:string,ROM:string,) {
+export function addToCart(
+  productId: string,
+  size: string,
+  color: string,
+  RAM: string,
+  ROM: string
+) {
   return async function addToCartThunk(dispatch: AppDispatch) {
     try {
       const res = await APIS.post("/cart", {
@@ -82,12 +88,13 @@ export function addToCart(productId: string, size: string, color: string,RAM:str
         RAM,
         ROM,
         size,
-        color, 
+        color,
         quantity: 1,
       });
       if (res.status === 200) {
         dispatch(setStatus(Status.SUCCESS));
         dispatch(setCart(res.data.data));
+        window.location.href = "/  ";
       } else {
         dispatch(setStatus(Status.ERROR));
         throw new Error("Failed to add to cart");
@@ -120,7 +127,7 @@ export function fetchCartItems() {
 export function updateCart(productId: string, quantity: number) {
   return async function updateCartThunk(dispatch: AppDispatch) {
     try {
-      const res = await APIS.patch("/cart/"+ productId, {  quantity });
+      const res = await APIS.patch("/cart/" + productId, { quantity });
       if (res.status === 200) {
         dispatch(setStatus(Status.SUCCESS));
         dispatch(setUpdateCart({ productId, quantity }));
@@ -138,7 +145,7 @@ export function deleteCart(productId: string) {
   return async function deleteCartThunk(dispatch: AppDispatch) {
     try {
       const res = await APIS.delete("/cart/" + productId);
-      if (res.status === 201) {
+      if (res.status === 200) {
         dispatch(setStatus(Status.SUCCESS));
         dispatch(setDeleteCartItem({ productId }));
       } else {

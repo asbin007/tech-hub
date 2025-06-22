@@ -18,7 +18,7 @@ export default function ProductDetailsPage() {
     (store) => !!store.auth.user.token || !!localStorage.getItem("token")
   );
   const navigate = useNavigate();
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams();
   const dispatch = useAppDispatch();
   const { product, status } = useAppSelector((store) => store.product);
 
@@ -27,11 +27,10 @@ export default function ProductDetailsPage() {
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedImage, setSelectedImage] = useState("");
-  const [quantity, setQuantity] = useState("1");
 
-  const [activeTab, setActiveTab] = useState<
-    "description" | "keyFeatures" | "spec"
-  >("description");
+  const [activeTab, setActiveTab] = useState(
+    "description"
+  );
 
   useEffect(() => {
     if (id) {
@@ -41,10 +40,19 @@ export default function ProductDetailsPage() {
 
   useEffect(() => {
     if (product) {
-      setSelectedRAM(product.RAM?.[0] || "");
-      setSelectedStorage(product.ROM?.[0] || "");
-      setSelectedColor(product.color?.[0] || "");
-      setSelectedSize(product.size?.[0] || "");
+      // Clean data to ensure plain strings
+      const cleanString = (value) => {
+        if (typeof value === "string") {
+          // Remove array-like syntax (e.g., '["value"]' -> 'value')
+          return value.replace(/^\["|"\]$/g, "");
+        }
+        return value || "";
+      };
+
+      setSelectedRAM(cleanString(product.RAM?.[0]));
+      setSelectedStorage(cleanString(product.ROM?.[0]));
+      setSelectedColor(cleanString(product.color?.[0]));
+      setSelectedSize(cleanString(product.size?.[0]));
       const firstImage = product.image?.[0]
         ? `https://res.cloudinary.com/dxpe7jikz/image/upload/v1750340657${product.image[0].replace(
             "/uploads",
@@ -63,13 +71,13 @@ export default function ProductDetailsPage() {
     );
   }
 
-  const ramPrices: Record<string, number> = {
+  const ramPrices = {
     "8GB": 0,
     "16GB": 200,
     "32GB": 600,
   };
 
-  const storagePrices: Record<string, number> = {
+  const storagePrices = {
     "256": 0,
     "512": 200,
     "1TB": 500,
@@ -79,8 +87,7 @@ export default function ProductDetailsPage() {
   const parsedRam = ramPrices[selectedRAM.toUpperCase()] || 0;
   const parsedStorage = storagePrices[selectedStorage.toUpperCase()] || 0;
 
-  const totalPrice =
-    (product.price + parsedRam + parsedStorage) * Number(quantity);
+  const totalPrice = product.price + parsedRam + parsedStorage;
 
   const handleAddToCart = async () => {
     if (!isLoggedIn) {
@@ -101,19 +108,26 @@ export default function ProductDetailsPage() {
       return;
     }
 
+    // Clean values before dispatching
+    const cleanString = (value) => value.replace(/^\["|"\]$/g, "");
+    const cleanedSize = cleanString(selectedSize);
+    const cleanedColor = cleanString(selectedColor);
+    const cleanedRAM = cleanString(selectedRAM);
+    const cleanedStorage = cleanString(selectedStorage);
+
     await dispatch(
       addToCart(
         product.id,
-        selectedSize,
-        selectedColor,
-        selectedRAM,
-        selectedStorage
+        cleanedSize,
+        cleanedColor,
+        cleanedRAM,
+        cleanedStorage
       )
     );
 
     alert("Item added to Cart Successfully");
 
-    navigate("/all-laptops");
+    navigate("/");
   };
 
   return (
@@ -129,7 +143,7 @@ export default function ProductDetailsPage() {
             />
           </div>
           <div className="flex gap-4">
-            {product.image.map((img: string, idx: number) => {
+            {product.image.map((img, idx) => {
               const thumbUrl = `https://res.cloudinary.com/dxpe7jikz/image/upload/v1750340657${img.replace(
                 "/uploads",
                 ""
@@ -308,7 +322,7 @@ export default function ProductDetailsPage() {
           {["description", "keyFeatures", "spec"].map((tab) => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab as any)}
+              onClick={() => setActiveTab(tab)}
               className={`px-4 py-2 border-b-2 font-semibold ${
                 activeTab === tab
                   ? "text-blue-600 border-blue-600"

@@ -16,7 +16,6 @@ const Navbar = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
-
   useEffect(() => {
     const localToken = localStorage.getItem('token');
     const loggedIn = !!reduxToken || !!localToken;
@@ -28,7 +27,7 @@ const Navbar = () => {
     }
   }, [reduxToken, dispatch]);
 
-  const handleCartClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+  const handleCartClick = (e) => {
     if (!isLogin) {
       e.preventDefault();
       toast.error('Please log in to view your cart', {
@@ -42,7 +41,6 @@ const Navbar = () => {
         },
       });
     }
-    // Navigation to /my-cart happens naturally via Link
   };
 
   const handleLogout = () => {
@@ -54,11 +52,11 @@ const Navbar = () => {
   };
 
   return (
-    <header className="border-b bg-white/95 backdrop-blur-sm sticky top-0 z-50">
-      <div className="container mx-auto px-4">
+    <header className="border-b bg-white/95 backdrop-blur-sm sticky top-0 z-50 w-full">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
         {/* Top bar */}
-        <div className="flex items-center justify-between py-2 text-sm text-gray-500 border-b">
-          <div className="flex items-center gap-6">
+        <div className="flex flex-col sm:flex-row items-center justify-between py-2 text-sm text-gray-500 border-b">
+          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
             <div className="flex items-center gap-2">
               <Truck className="h-4 w-4" />
               <span>Free shipping on orders over $500</span>
@@ -68,7 +66,7 @@ const Navbar = () => {
               <span>24/7 Customer Support</span>
             </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 mt-2 sm:mt-0">
             <Link to="/track-order" className="hover:text-gray-900 transition-colors">
               Track Order
             </Link>
@@ -80,17 +78,17 @@ const Navbar = () => {
 
         {/* Main header */}
         <div className="flex items-center justify-between py-4">
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-4 sm:gap-8 flex-1">
             <Link to="/" className="flex items-center gap-3" aria-label="TechHub Home">
               <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-xl">
                 <Laptop className="h-6 w-6 text-white" />
               </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 TechHub
               </span>
             </Link>
 
-            <nav className="hidden lg:flex items-center gap-8" role="navigation">
+            <nav className="hidden lg:flex items-center gap-6 xl:gap-8" role="navigation">
               <Link to="/all-laptops" className="text-sm font-medium hover:text-blue-600 transition-colors">
                 All Laptops
               </Link>
@@ -112,10 +110,9 @@ const Navbar = () => {
             </nav>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <form
-             
-              className="hidden md:flex items-center gap-2 bg-gray-50 rounded-xl px-4 py-2 w-80 border"
+              className="hidden md:flex items-center gap-2 bg-gray-50 rounded-xl px-3 sm:px-4 py-2 w-48 sm:w-64 lg:w-80 border"
             >
               <Search className="h-4 w-4 text-gray-500" />
               <input
@@ -144,7 +141,7 @@ const Navbar = () => {
               <Link to="/my-cart" onClick={handleCartClick}>
                 <button className="p-2 rounded-full hover:bg-gray-100">
                   <svg
-                    className="h-6 w-6"
+                    className="h-5 w-5 sm:h-6 sm:w-6"
                     fill="none"
                     stroke="currentColor"
                     strokeWidth={2}
