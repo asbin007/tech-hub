@@ -14,6 +14,7 @@ import ResetPassword from "./pages/user/reset-password";
 import ProductDetail from "./pages/products/ProductDetaills";
 import ProductFilters from "./pages/products/ProductFilter";
 import MyCart from "./pages/cart/MyCart";
+import Checkout from "./pages/checkout/checkout";
 
 export default function App() {
   return (
@@ -42,6 +43,7 @@ export default function App() {
             <Route path="/:categoryName" element={<ProductFilters />} />
 
             <Route path="/my-cart" element={<MyCart />} />
+            <Route path="/my-checkout" element={<Checkout />} />
           </Routes>
         </div>
       </BrowserRouter>
