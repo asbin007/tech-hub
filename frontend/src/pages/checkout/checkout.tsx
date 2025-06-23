@@ -2,8 +2,31 @@ import type { ChangeEvent, FormEvent } from "react";
 import { useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import toast from "react-hot-toast";
-import { postOrderItem, type IData } from "../../store/orderSlice";
-import { PaymentMethod } from "./types";
+import { postOrderItem } from "../../store/orderSlice";
+
+export enum PaymentMethod {
+  Khalti = "khalti",
+  Esewa = "esewa",
+  COD = "cod",
+}
+
+export interface IData {
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  addressLine: string;
+  city: string;
+  state: string;
+  street: string;
+  zipcode: string;
+  email: string;
+  totalPrice: number;
+  paymentMethod: PaymentMethod;
+  products: {
+    productId: string;
+    productQty: number;
+  }[];
+}
 
 function Checkout() {
   const dispatch = useAppDispatch();
@@ -21,13 +44,14 @@ function Checkout() {
     lastName: "",
     addressLine: "",
     city: "",
-    totalPrice: 0,
+    state: "", 
+    street: "",
     zipcode: "",
     email: "",
     phoneNumber: "",
-    street: "",
+    totalPrice: 0,
     paymentMethod: PaymentMethod.COD,
-    prod: [],
+    products: [],
   });
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
@@ -53,31 +77,59 @@ function Checkout() {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const productData =
-      data.length > 0
-        ? data.map((item) => ({
-            productId: item.Product.id,
-            productQty: item.quantity,
-          }))
-        : [];
+    const requiredFields = [
+      "firstName",
+      "lastName",
+      "email",
+      "phoneNumber",
+      "addressLine",
+      "city",
+      "street",
+      "state",
+      "zipcode",
+    ];
 
-   const finalData: IData = {
-  ...item,
-  Product: productData,
-  totalPrice: total,
-};
+    for (const field of requiredFields) {
+      if (
+        !item[field as keyof IData] ||
+        item[field as keyof IData]?.toString().trim() === ""
+      ) {
+        toast.error(`Please fill in your ${field}`, { position: "top-center" });
+        return;
+      }
+    }
 
-    await dispatch(postOrderItem(finalData));
-    toast.success("Order created successfully", {
-      duration: 3000,
-      position: "top-center",
-      style: {
-        background: "#22c55e",
-        color: "white",
-        padding: "12px 16px",
-        borderRadius: "8px",
-      },
-    });
+    if (data.length === 0) {
+      toast.error("Please add at least one product to your cart.", {
+        position: "top-center",
+      });
+      return;
+    }
+
+    const productData = data.map((cartItem) => ({
+      productId: cartItem.Product.id,
+      productQty: cartItem.quantity,
+    }));
+
+    const finalData: IData = {
+      ...item,
+      products: productData,
+      totalPrice: total,
+    };
+     await dispatch(postOrderItem(finalData));
+       toast.error("Order created successfully", {
+        duration: 3000,
+        position: "top-center",
+        style: {
+          background: "#dc2626",
+          color: "green",
+          padding: "12px 16px",
+          borderRadius: "8px",
+        },
+      });
+    
+
+    
   };
 
   return (
@@ -228,6 +280,7 @@ function Checkout() {
                       handlePaymentMethod(e.target.value as PaymentMethod)
                     }
                     className="mt-1 px-4 py-2 rounded-md bg-gray-100 text-sm w-full"
+                    value={paymentMethod}
                   >
                     <option value={PaymentMethod.COD}>COD</option>
                     <option value={PaymentMethod.Khalti}>Khalti</option>

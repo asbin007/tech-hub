@@ -1,10 +1,6 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { Status } from "../globals/types/types";
-import type {
-  IOrderDetail,
-  
-  PaymentStatus,
-} from "../pages/checkout/types";
+import type { IOrderDetail, PaymentStatus } from "../pages/checkout/types";
 import type { AppDispatch } from "./store";
 import { APIS } from "../globals/http";
 
@@ -48,7 +44,7 @@ export interface IData {
   email: string;
   totalPrice: number;
   paymentMethod: PaymentMethod;
-  Product: IProduct[];
+  products: IProduct[];
 }
 
 const initialState: IOrder = {
@@ -89,7 +85,7 @@ export function postOrderItem(data: IData) {
         dispatch(setItems(res.data.data));
         console.log(res.data.url, "Url");
         if (res.data.url) {
-          setKhaltiUrl(res.data.url);
+          dispatch(setKhaltiUrl(res.data.url));
           window.location.href = res.data.url;
         } else {
           dispatch(setStatus(Status.ERROR));
@@ -102,40 +98,39 @@ export function postOrderItem(data: IData) {
   };
 }
 
-export function fetchMyOrders(){
-    return async function fetchMyOrdersThunk(dispatch:AppDispatch){
-        try {
-            const response =  await APIS.get("/order")
-            if(response.status === 200){
-                dispatch(setStatus(Status.SUCCESS))
-                dispatch(setItems(response.data.data))
-            }else{
-                dispatch(setStatus(Status.ERROR))
-            }
-        } catch (error) {
-            console.log(error)
-            dispatch(setStatus(Status.ERROR))
-            
-        }
+export function fetchMyOrders() {
+  return async function fetchMyOrdersThunk(dispatch: AppDispatch) {
+    try {
+      const response = await APIS.get("/order");
+      if (response.status === 200) {
+        dispatch(setStatus(Status.SUCCESS));
+        dispatch(setItems(response.data.data));
+      } else {
+        dispatch(setStatus(Status.ERROR));
+      }
+    } catch (error) {
+      console.log(error);
+      dispatch(setStatus(Status.ERROR));
     }
+  };
 }
 
-export function fetchMyOrderDetails(id:string){
-    return async function fetchMyOrderDetailsThunk(dispatch:AppDispatch){
-        try {
-            const response =  await APIS.get("/order/" + id)
-            if(response.status === 200){
-                dispatch(setStatus(Status.SUCCESS))
-                dispatch(setOrderDetails(response.data.data))
-            }else{
-                dispatch(setStatus(Status.ERROR))
-            }
-        } catch (error) {
-            console.log(error)
-            dispatch(setStatus(Status.ERROR))
-            
-        }
+
+export function fetchMyOrderDetails(id: string) {
+  return async function fetchMyOrderDetailsThunk(dispatch: AppDispatch) {
+    try {
+      const response = await APIS.get("/order/" + id);
+      if (response.status === 200) {
+        dispatch(setStatus(Status.SUCCESS));
+        dispatch(setOrderDetails(response.data.data));
+      } else {
+        dispatch(setStatus(Status.ERROR));
+      }
+    } catch (error) {
+      console.log(error);
+      dispatch(setStatus(Status.ERROR));
     }
+  };
 }
 // export function cancelOrderAPI(id:string){
 //     return async function cancelOrderAPIThunk(dispatch:AppDispatch){
@@ -150,7 +145,7 @@ export function fetchMyOrderDetails(id:string){
 //         } catch (error) {
 //             console.log(error)
 //             dispatch(setStatus(Status.ERROR))
-            
+
 //         }
 //     }
 // }

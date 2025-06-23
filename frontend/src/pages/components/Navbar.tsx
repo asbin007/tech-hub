@@ -40,6 +40,18 @@ const Navbar = () => {
           borderRadius: '8px',
         },
       });
+    } else if (cartItems.length === 0) {
+      e.preventDefault();
+      toast.error('Your cart is empty. Add items to proceed.', {
+        duration: 3000,
+        position: 'top-center',
+        style: {
+          background: '#f97316', // orange
+          color: '#ffffff',
+          padding: '12px 16px',
+          borderRadius: '8px',
+        },
+      });
     }
   };
 

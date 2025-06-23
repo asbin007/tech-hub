@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import {  useParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { getSingleProduct } from "../../store/productSlice";
 import {
@@ -12,25 +12,24 @@ import {
 } from "lucide-react";
 import { Status } from "../../globals/types/types";
 import { addToCart } from "../../store/cartSlice";
+import toast from "react-hot-toast";
+import Review from "./Review";
 
 export default function ProductDetailsPage() {
   const isLoggedIn = useAppSelector(
     (store) => !!store.auth.user.token || !!localStorage.getItem("token")
   );
-  const navigate = useNavigate();
   const { id } = useParams();
   const dispatch = useAppDispatch();
   const { product, status } = useAppSelector((store) => store.product);
+  const { review } = useAppSelector((store) => store.review);
 
   const [selectedRAM, setSelectedRAM] = useState("");
   const [selectedStorage, setSelectedStorage] = useState("");
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedImage, setSelectedImage] = useState("");
-
-  const [activeTab, setActiveTab] = useState(
-    "description"
-  );
+  const [activeTab, setActiveTab] = useState("description");
 
   useEffect(() => {
     if (id) {
@@ -40,19 +39,14 @@ export default function ProductDetailsPage() {
 
   useEffect(() => {
     if (product) {
-      // Clean data to ensure plain strings
-      const cleanString = (value) => {
-        if (typeof value === "string") {
-          // Remove array-like syntax (e.g., '["value"]' -> 'value')
-          return value.replace(/^\["|"\]$/g, "");
-        }
-        return value || "";
-      };
+      const cleanString = (value: string) =>
+        typeof value === "string" ? value.replace(/^\["|"\]$/g, "") : value || "";
 
       setSelectedRAM(cleanString(product.RAM?.[0]));
       setSelectedStorage(cleanString(product.ROM?.[0]));
       setSelectedColor(cleanString(product.color?.[0]));
       setSelectedSize(cleanString(product.size?.[0]));
+
       const firstImage = product.image?.[0]
         ? `https://res.cloudinary.com/dxpe7jikz/image/upload/v1750340657${product.image[0].replace(
             "/uploads",
@@ -86,54 +80,56 @@ export default function ProductDetailsPage() {
 
   const parsedRam = ramPrices[selectedRAM.toUpperCase()] || 0;
   const parsedStorage = storagePrices[selectedStorage.toUpperCase()] || 0;
-
   const totalPrice = product.price + parsedRam + parsedStorage;
 
   const handleAddToCart = async () => {
     if (!isLoggedIn) {
-      alert("Please log in to add to cart");
+      toast.error("Please log in to add to cart.");
       return;
     }
 
-    if (
-      !product?.id ||
-      !selectedSize ||
-      !selectedColor ||
-      !selectedRAM ||
-      !selectedStorage
-    ) {
-      alert(
-        "Please select size, color, RAM, and storage before adding to cart."
-      );
+    if (!product?.id || !selectedSize || !selectedColor || !selectedRAM || !selectedStorage) {
+      toast.error("Please select size, color, RAM, and storage first.");
       return;
     }
 
-    // Clean values before dispatching
-    const cleanString = (value) => value.replace(/^\["|"\]$/g, "");
-    const cleanedSize = cleanString(selectedSize);
-    const cleanedColor = cleanString(selectedColor);
-    const cleanedRAM = cleanString(selectedRAM);
-    const cleanedStorage = cleanString(selectedStorage);
+    const cleanString = (value: string) => value.replace(/^\["|"\]$/g, "");
 
     await dispatch(
       addToCart(
         product.id,
-        cleanedSize,
-        cleanedColor,
-        cleanedRAM,
-        cleanedStorage
+        cleanString(selectedSize),
+        cleanString(selectedColor),
+        cleanString(selectedRAM),
+        cleanString(selectedStorage)
       )
     );
-
-    alert("Item added to Cart Successfully");
-
-    navigate("/");
+    toast.success("Item added to cart successfully!");
   };
+
+  const averageRating =
+    review.length > 0
+      ? review.reduce((sum, r) => sum + (r.rating ?? 0), 0) / review.length
+      : 0;
+  const roundedRating = Math.round(averageRating);
+
+  const mappedReviews = review.map((r) => ({
+    id: r.id || "",
+    productId: r.productId || "",
+    userId: r.userId || "",
+    comment: r.comment || "",
+    rating: r.rating ?? 0,
+    createdAt: r.createdAt || new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    User: r.User
+      ? { id: r.User.id || "", username: r.User.username || "" }
+      : { id: "", username: "" },
+  }));
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
-        {/* Product Images */}
+        {/* Images */}
         <div className="space-y-4">
           <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
             <img
@@ -166,37 +162,31 @@ export default function ProductDetailsPage() {
           </div>
         </div>
 
-        {/* Product Details */}
+        {/* Details */}
         <div className="space-y-6">
-          {/* NEW tag */}
           {product.isNew && (
             <span className="inline-block bg-green-100 text-green-700 text-sm font-medium px-3 py-1 rounded-full">
               NEW
             </span>
           )}
-
           <h1 className="text-3xl font-bold text-gray-900">{product.name}</h1>
 
-          {/* Ratings */}
           <div className="flex items-center gap-2 mt-2">
-            {[1, 2, 3, 4, 5].map((star) => (
+            {[...Array(5)].map((_, i) => (
               <Star
-                key={star}
+                key={i}
                 className={`w-5 h-5 ${
-                  star <= 4
-                    ? "fill-yellow-400 text-yellow-400"
-                    : "text-gray-300"
+                  i < roundedRating ? "text-yellow-400" : "text-gray-300"
                 }`}
+                fill={i < roundedRating ? "currentColor" : "none"}
               />
             ))}
           </div>
 
-          {/* Pricing */}
           <div className="text-3xl font-bold text-gray-900">
             ${totalPrice.toLocaleString()}
           </div>
 
-          {/* Stock Info */}
           <p className="text-sm text-gray-600">
             Stock Status:{" "}
             <span
@@ -207,79 +197,29 @@ export default function ProductDetailsPage() {
             | Total Stock: {product.totalStock}
           </p>
 
-          {/* RAM */}
-          <div className="space-y-2">
-            <label className="block font-medium">Select RAM</label>
-            {product.RAM.map((ram) => (
-              <button
-                key={ram}
-                className={`px-4 py-2 rounded-md border ${
-                  selectedRAM === ram
-                    ? "bg-blue-100 border-blue-600"
-                    : "border-gray-300"
-                }`}
-                onClick={() => setSelectedRAM(ram)}
-              >
-                {ram.toUpperCase()}
-              </button>
-            ))}
-          </div>
+          {[{ label: "RAM", items: product.RAM, selected: selectedRAM, set: setSelectedRAM },
+            { label: "Storage", items: product.ROM, selected: selectedStorage, set: setSelectedStorage },
+            { label: "Color", items: product.color, selected: selectedColor, set: setSelectedColor },
+            { label: "Size", items: product.size, selected: selectedSize, set: setSelectedSize }
+          ].map(({ label, items, selected, set }) => (
+            <div key={label} className="space-y-2">
+              <label className="block font-medium">Select {label}</label>
+              {items.map((item) => (
+                <button
+                  key={item}
+                  className={`px-4 py-2 rounded-md border ${
+                    selected === item
+                      ? "bg-blue-100 border-blue-600"
+                      : "border-gray-300"
+                  }`}
+                  onClick={() => set(item)}
+                >
+                  {item.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          ))}
 
-          {/* Storage */}
-          <div className="space-y-2">
-            <label className="block font-medium">Select Storage</label>
-            {product.ROM.map((rom) => (
-              <button
-                key={rom}
-                className={`px-4 py-2 rounded-md border ${
-                  selectedStorage === rom
-                    ? "bg-blue-100 border-blue-600"
-                    : "border-gray-300"
-                }`}
-                onClick={() => setSelectedStorage(rom)}
-              >
-                {rom.toUpperCase()}
-              </button>
-            ))}
-          </div>
-
-          {/* Color */}
-          <div className="space-y-2">
-            <label className="block font-medium">Select Color</label>
-            {product.color.map((color) => (
-              <button
-                key={color}
-                className={`px-4 py-2 rounded-md border ${
-                  selectedColor === color
-                    ? "bg-blue-100 border-blue-600"
-                    : "border-gray-300"
-                }`}
-                onClick={() => setSelectedColor(color)}
-              >
-                {color.replace("-", " ").toUpperCase()}
-              </button>
-            ))}
-          </div>
-
-          {/* Size */}
-          <div className="space-y-2">
-            <label className="block font-medium">Select Size</label>
-            {product.size.map((size) => (
-              <button
-                key={size}
-                className={`px-4 py-2 rounded-md border ${
-                  selectedSize === size
-                    ? "bg-blue-100 border-blue-600"
-                    : "border-gray-300"
-                }`}
-                onClick={() => setSelectedSize(size)}
-              >
-                {size}
-              </button>
-            ))}
-          </div>
-
-          {/* Buttons */}
           <div className="space-y-4">
             <button
               onClick={handleAddToCart}
@@ -298,7 +238,6 @@ export default function ProductDetailsPage() {
             </button>
           </div>
 
-          {/* Info Icons */}
           <div className="grid grid-cols-3 gap-4 pt-4 text-sm">
             <div className="flex items-center space-x-2">
               <Truck className="w-4 h-4 text-green-600" />
@@ -319,7 +258,7 @@ export default function ProductDetailsPage() {
       {/* Tabs */}
       <div className="mt-16">
         <div className="border-b flex space-x-4">
-          {["description", "keyFeatures", "spec"].map((tab) => (
+          {["description", "keyFeatures", "spec", "review"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -339,20 +278,16 @@ export default function ProductDetailsPage() {
         <div className="mt-8 bg-white rounded-lg shadow p-6 prose max-w-none text-gray-700">
           {activeTab === "description" && (
             <>
-              <h3 className="text-xl font-semibold mb-4">
-                Product Description
-              </h3>
+              <h3 className="text-xl font-semibold mb-4">Product Description</h3>
               {product.description.map((desc, idx) => (
-                <p key={idx} className="mb-2">
-                  {desc}
-                </p>
+                <p key={idx}>{desc}</p>
               ))}
             </>
           )}
           {activeTab === "keyFeatures" && (
             <>
               <h3 className="text-xl font-semibold mb-4">Key Features</h3>
-              <ul className="list-disc pl-5 space-y-2">
+              <ul className="list-disc pl-5">
                 {product.keyFeatures.map((feat, idx) => (
                   <li key={idx}>{feat}</li>
                 ))}
@@ -362,12 +297,15 @@ export default function ProductDetailsPage() {
           {activeTab === "spec" && (
             <>
               <h3 className="text-xl font-semibold mb-4">Specifications</h3>
-              <ul className="list-disc pl-5 space-y-2">
+              <ul className="list-disc pl-5">
                 {product.spec.map((item, idx) => (
                   <li key={idx}>{item}</li>
                 ))}
               </ul>
             </>
+          )}
+          {activeTab === "review" && (
+            <Review key={product.id} review={mappedReviews} productId={product.id} />
           )}
         </div>
       </div>

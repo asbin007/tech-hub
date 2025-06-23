@@ -3,6 +3,7 @@ import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { Status } from "../globals/types/types";
 import type { AppDispatch } from "./store";
 import { APIS } from "../globals/http";
+import toast from "react-hot-toast";
 
 interface ICartItem {
   id: string;
@@ -94,7 +95,9 @@ export function addToCart(
       if (res.status === 200) {
         dispatch(setStatus(Status.SUCCESS));
         dispatch(setCart(res.data.data));
-        window.location.href = "/  ";
+        toast.success("Item added to cart successfully!");
+
+          window.location.href = "/";
       } else {
         dispatch(setStatus(Status.ERROR));
         throw new Error("Failed to add to cart");

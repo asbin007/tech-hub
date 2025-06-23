@@ -3,6 +3,7 @@ import Navbar from "./pages/components/Navbar";
 import Home from "./pages/home/Home";
 import { Provider } from "react-redux";
 import store from "./store/store";
+import { Toaster } from "react-hot-toast"; // ✅ Import this
 
 // User Auth Pages
 import Register from "./pages/user/register";
@@ -22,6 +23,7 @@ export default function App() {
       <BrowserRouter>
         <div className="min-h-screen bg-gray-100">
           <Navbar />
+          <Toaster position="top-center" reverseOrder={false} /> {/* ✅ Add this */}
           <Routes>
             {/* Home Route */}
             <Route path="/" element={<Home />} />
@@ -33,15 +35,12 @@ export default function App() {
             <Route path="/reset-password" element={<ResetPassword />} />
 
             {/* Product Routes */}
-            <Route
-              path="/:categoryName/:brand/:id"
-              element={<ProductDetail />}
-            />
+            <Route path="/:categoryName/:brand/:id" element={<ProductDetail />} />
             <Route path="/:categoryName/:brand" element={<ProductFilters />} />
             <Route path="/all-laptops" element={<ProductFilters />} />
-
             <Route path="/:categoryName" element={<ProductFilters />} />
 
+            {/* Cart and Checkout */}
             <Route path="/my-cart" element={<MyCart />} />
             <Route path="/my-checkout" element={<Checkout />} />
           </Routes>
