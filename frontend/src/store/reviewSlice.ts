@@ -1,4 +1,4 @@
-import { createSlice, type PayloadAction, } from "@reduxjs/toolkit";
+import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { Status } from "../globals/types/types";
 import { API, APIS } from "../globals/http";
 import type { AppDispatch } from "./store";
@@ -7,7 +7,7 @@ interface user {
   id: string | null;
   username: string | null;
 }
-export interface IData {
+ interface IData {
   id: string | null;
   productId: string | null;
   userId: string | null;

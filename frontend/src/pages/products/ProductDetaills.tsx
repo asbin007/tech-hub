@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import  { useEffect, useState } from "react";
 import {  useParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { getSingleProduct } from "../../store/productSlice";
+import { getProducts, getSingleProduct } from "../../store/productSlice";
 import {
   Heart,
   Star,
@@ -33,6 +33,7 @@ export default function ProductDetailsPage() {
 
   useEffect(() => {
     if (id) {
+      dispatch(getProducts())
       dispatch(getSingleProduct(id));
     }
   }, [dispatch, id]);
@@ -78,8 +79,11 @@ export default function ProductDetailsPage() {
     "2TB": 1000,
   };
 
-  const parsedRam = ramPrices[selectedRAM.toUpperCase()] || 0;
-  const parsedStorage = storagePrices[selectedStorage.toUpperCase()] || 0;
+  const parsedRam = ramPrices[selectedRAM.toUpperCase() as keyof typeof ramPrices] || 0;
+  const parsedStorage =
+    storagePrices[
+      selectedStorage.toUpperCase() as keyof typeof storagePrices
+    ] || 0;
   const totalPrice = product.price + parsedRam + parsedStorage;
 
   const handleAddToCart = async () => {
@@ -113,18 +117,6 @@ export default function ProductDetailsPage() {
       : 0;
   const roundedRating = Math.round(averageRating);
 
-  const mappedReviews = review.map((r) => ({
-    id: r.id || "",
-    productId: r.productId || "",
-    userId: r.userId || "",
-    comment: r.comment || "",
-    rating: r.rating ?? 0,
-    createdAt: r.createdAt || new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    User: r.User
-      ? { id: r.User.id || "", username: r.User.username || "" }
-      : { id: "", username: "" },
-  }));
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -305,7 +297,20 @@ export default function ProductDetailsPage() {
             </>
           )}
           {activeTab === "review" && (
-            <Review key={product.id} review={mappedReviews} productId={product.id} />
+            <Review
+              key={product.id}
+              productId={product.id}
+              review={review.map((r: any) => ({
+                id: r.id,
+                rating: r.rating,
+                comment: r.comment,
+                userId: r.userId,
+                productId: r.productId,
+                createdAt: r.createdAt,
+                updatedAt: r.updatedAt ?? r.createdAt,
+                User: r.User ?? null,
+              }))}
+            />
           )}
         </div>
       </div>

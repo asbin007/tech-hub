@@ -4,7 +4,7 @@ import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import toast from "react-hot-toast";
 import { postOrderItem } from "../../store/orderSlice";
 
-export enum PaymentMethod {
+ enum PaymentMethod {
   Khalti = "khalti",
   Esewa = "esewa",
   COD = "cod",

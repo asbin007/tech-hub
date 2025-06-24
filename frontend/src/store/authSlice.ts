@@ -1,4 +1,3 @@
-
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { API, APIS } from "../globals/http";
 import { Status } from "../globals/types/types";
@@ -61,6 +60,7 @@ const authSlice = createSlice({
       state.status = Status.LOADING;
 
       localStorage.removeItem("token");
+      localStorage.removeItem("user");
     },
   },
 });
@@ -92,11 +92,25 @@ export function loginUser(data: ILoginUser) {
         const { id, username, email } = response.data;
         dispatch(setStatus(Status.SUCCESS));
         console.log("res", response.data);
-        const token =response.data.token || response.data.session?.access_token;
+        const token =
+          response.data.token || response.data.session?.access_token;
 
         if (token) {
           localStorage.setItem("token", token);
-          dispatch(setUser({ id, username, email, password: null, token }));
+          // dispatch(setUser({ id, username, email, password: null, token }));
+          // dispatch(setStatus(Status.SUCCESS))
+          // console.log(id,email,username)
+          const userData: IUser = {
+            id,
+            username,
+            email,
+            token,
+            password: null,
+          };
+
+          localStorage.setItem("user", JSON.stringify(userData));
+          dispatch(setUser(userData));
+          dispatch(setStatus(Status.SUCCESS));
         } else {
           dispatch(setStatus(Status.ERROR));
         }
@@ -138,6 +152,23 @@ export function resetPassword(data: IResetPassword) {
     } catch (error) {
       console.log(error);
       dispatch(setStatus(Status.ERROR));
+    }
+  };
+}
+export function loadUserFromStorage() {
+  return function loadUserThunk(dispatch: AppDispatch) {
+    const token = localStorage.getItem("token");
+    const user = localStorage.getItem("user");
+
+    if (token && user) {
+      try {
+        const parsedUser = JSON.parse(user);
+        dispatch(setUser({ ...parsedUser, token }));
+        dispatch(setStatus(Status.SUCCESS));
+      } catch (e) {
+        console.error("Failed to parse user from storage");
+        dispatch(setStatus(Status.ERROR));
+      }
     }
   };
 }
