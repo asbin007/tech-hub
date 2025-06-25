@@ -10,11 +10,16 @@ interface IProduct {
   totalPrice?: number;
   orderStatus: Status;
   paymentId: string;
-  createdAt:string
+  createdAt: string;
   Payment?: {
     paymentMethod: PaymentMethod;
     paymentStatus: PaymentStatus;
   };
+  OrderDetails: [
+    {
+      quantity: number;
+    }
+  ];
 }
 export interface IOrderItems extends IProduct {
   id: string;
@@ -115,7 +120,6 @@ export function fetchMyOrders() {
     }
   };
 }
-
 
 export function fetchMyOrderDetails(id: string) {
   return async function fetchMyOrderDetailsThunk(dispatch: AppDispatch) {

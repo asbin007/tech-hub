@@ -125,7 +125,7 @@ export default function MyOrdersPage() {
                       <div>
                         <span className="font-medium">Items:</span>
                         <br />
-                        1 item
+                        {order.OrderDetails[0].quantity}
                       </div>
                       <div>
                         <span className="font-medium">Total:</span>
