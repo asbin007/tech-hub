@@ -84,7 +84,7 @@ const Review: React.FC<ReviewProps> = ({ productId }) => {
       setComment("");
       setRating(0);
       toast.success("Review submitted!");
-    } catch (err) {
+    } catch {
       toast.error("Failed to submit review.");
     }
   };
@@ -168,9 +168,9 @@ const Review: React.FC<ReviewProps> = ({ productId }) => {
     setEditRating(0);
   };
 
-  const toggleDropdown = (reviewId: string) => {
-    setDropdownOpen(dropdownOpen === reviewId ? null : reviewId);
-  };
+  const toggleDropdown = (reviewId: string | null) => {
+      setDropdownOpen(dropdownOpen === reviewId ? null : reviewId);
+    };
 
   if (reviewStatus === Status.LOADING) {
     return <div className="text-center py-12">Loading reviews...</div>;
@@ -195,7 +195,7 @@ const Review: React.FC<ReviewProps> = ({ productId }) => {
                     <div className="flex justify-between items-center mb-2">
                       <div>
                         <h3 className="font-semibold text-gray-800">{item?.User?.username || "Anonymous"}</h3>
-                        <p className="text-xs text-gray-400">{new Date(item.createdAt).toLocaleDateString()}</p>
+                        <p className="text-xs text-gray-400">{new Date(item.createdAt ?? "").toLocaleDateString()}</p>
                       </div>
 
                       {item.userId === currentUserId && (
@@ -208,7 +208,7 @@ const Review: React.FC<ReviewProps> = ({ productId }) => {
                           {dropdownOpen === item.id && (
                             <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-md shadow-lg z-10">
                               <button onClick={() => handleEdit(item)} className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Edit</button>
-                              <button onClick={() => handleDelete(item.id)} className="w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Delete</button>
+                              <button onClick={() => item.id && handleDelete(item.id)} className="w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Delete</button>
                             </div>
                           )}
                         </div>

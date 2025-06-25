@@ -165,7 +165,7 @@ export function loadUserFromStorage() {
         const parsedUser = JSON.parse(user);
         dispatch(setUser({ ...parsedUser, token }));
         dispatch(setStatus(Status.SUCCESS));
-      } catch (e) {
+      } catch  {
         console.error("Failed to parse user from storage");
         dispatch(setStatus(Status.ERROR));
       }

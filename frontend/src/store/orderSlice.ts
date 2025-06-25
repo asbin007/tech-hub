@@ -10,6 +10,7 @@ interface IProduct {
   totalPrice?: number;
   orderStatus: Status;
   paymentId: string;
+  createdAt:string
   Payment?: {
     paymentMethod: PaymentMethod;
     paymentStatus: PaymentStatus;

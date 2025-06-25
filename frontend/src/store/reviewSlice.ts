@@ -62,7 +62,11 @@ export function fetchReview(productId: string) {
       const res = await API.get(`/review/${productId}`);
 
       if (res.status === 200) {
-        dispatch(setReview(res.data.data || res.data)); // Handle both response formats
+         // ✅ Ensure review array is correctly extracted
+        const reviewArray = Array.isArray(res.data.data)
+          ? res.data.data
+          : res.data.data?.reviews || [];
+        dispatch(setReview(reviewArray)); 
         dispatch(setStatus(Status.SUCCESS));
       } else {
         dispatch(setStatus(Status.ERROR));

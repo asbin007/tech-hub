@@ -300,16 +300,7 @@ export default function ProductDetailsPage() {
             <Review
               key={product.id}
               productId={product.id}
-              review={review.map((r: any) => ({
-                id: r.id,
-                rating: r.rating,
-                comment: r.comment,
-                userId: r.userId,
-                productId: r.productId,
-                createdAt: r.createdAt,
-                updatedAt: r.updatedAt ?? r.createdAt,
-                User: r.User ?? null,
-              }))}
+             
             />
           )}
         </div>

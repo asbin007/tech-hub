@@ -3,12 +3,15 @@ import authSlice from './authSlice'
 import cartSlice from './cartSlice'
 import productSlice from './productSlice'
 import reviewSlice from './reviewSlice'
+import orderSlice from "./orderSlice"
 const store=configureStore({
     reducer:{
         auth:authSlice,
         cart:cartSlice,
         product:productSlice,
-        review:reviewSlice
+        review:reviewSlice,
+        orders:orderSlice
+        
 
     }
 })
