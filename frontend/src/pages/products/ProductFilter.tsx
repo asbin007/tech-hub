@@ -20,25 +20,42 @@ const ProductFilters = () => {
   }, [brand]);
 
   // Convert categoryName to a readable format (e.g., "2-in-1-laptops" => "2-in-1 Laptops")
-  const formattedCategoryName = categoryName?.replace(/-/g, " ").toLowerCase();
+  const formattedCategoryName = categoryName
+    ? categoryName.replace(/-/g, " ").toLowerCase().trim()
+    : "";
 
   const brands = ["All", ...new Set(products.map((product) => product.brand))];
 
+  const normalize = (str: string) => str?.toLowerCase().trim();
+
   const filtered = products.filter((product) => {
-    const matchBrand = brand
-      ? product.brand.toLowerCase() === brand.toLowerCase()
-      : true;
+    const matchBrand =
+      activeBrand === "All" ||
+      normalize(product.brand) === normalize(activeBrand);
 
     const matchCategory = formattedCategoryName
-      ? product.Category?.categoryName.toLowerCase() === formattedCategoryName
+      ? normalize(product.Category?.categoryName) === formattedCategoryName
       : true;
+
+    // If brand is selected, ignore category mismatch
+    if (activeBrand !== "All") return matchBrand;
 
     return matchBrand && matchCategory;
   });
 
   const handleBrandClick = (selectedBrand: string) => {
-    if (selectedBrand === "All") navigate(`/${categoryName}`);
-    else navigate(`/${categoryName}/${selectedBrand}`);
+    // Fallback if categoryName is not coming from URL
+    const firstCategory = products[0]?.Category?.categoryName;
+    if (!categoryName && !firstCategory) return;
+
+    const category = categoryName || firstCategory;
+    const formatted = category.toLowerCase().replace(/\s+/g, "-");
+
+    if (selectedBrand === "All") {
+      navigate(`/${formatted}`);
+    } else {
+      navigate(`/${formatted}/${selectedBrand}`);
+    }
   };
 
   return (

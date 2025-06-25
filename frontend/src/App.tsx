@@ -55,7 +55,7 @@ export default function App() {
 
           {/* my-order */}
           <Route path="/my-orders" element={<MyOrdersPage />} />
-          <Route path="/my-orders/:id" element={<OrderDetailsPage />} />
+          <Route path="/my-order/:id" element={<OrderDetailsPage />} />
         </Routes>
       </div>
     </BrowserRouter>
