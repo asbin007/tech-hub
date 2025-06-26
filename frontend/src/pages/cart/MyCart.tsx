@@ -78,7 +78,7 @@ function MyCart() {
                             </span>
                           </div>
                         </td>
-                        <td className="py-4 text-sm">Rs. {item.Product.price}</td>
+                        <td className="py-4 text-sm">रु{item.Product.price}</td>
                         <td className="py-4">
                           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
                             <button
@@ -103,7 +103,7 @@ function MyCart() {
                           </div>
                         </td>
                         <td className="py-4 text-sm">
-                          Rs. {item.Product.price * item.quantity}
+                          रु{item.Product.price * item.quantity}
                         </td>
                         <td className="py-4">
                           <button
@@ -142,12 +142,12 @@ function MyCart() {
               </div>
               <div className="flex justify-between mb-2 text-sm">
                 <span>Shipping</span>
-                <span>Rs {shippingPrice}</span>
+                <span>रु{shippingPrice}</span>
               </div>
               <hr className="my-2" />
               <div className="flex justify-between mb-2 text-base font-semibold">
                 <span>Total</span>
-                <span>Rs. {total}</span>
+                <span>रु{total}</span>
               </div>
               <Link to="/my-checkout">
                 <button className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg mt-4 w-full">

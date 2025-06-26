@@ -73,11 +73,11 @@ const ProductCard: React.FC<ICardProps> = ({ product }) => {
           <div className="flex items-center justify-between mt-4">
             <div>
               <span className="font-bold text-indigo-600">
-                ${product.price.toFixed(2)}
+                रु{product.price.toFixed(2)}
               </span>
               {originalPrice && (
                 <span className="text-gray-400 text-sm line-through ml-2">
-                  ${originalPrice}
+                  रु{originalPrice}
                 </span>
               )}
             </div>

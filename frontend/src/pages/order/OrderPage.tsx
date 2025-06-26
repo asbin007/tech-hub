@@ -25,15 +25,14 @@ const getStatusColor = (status: OrderStatus) => {
 
 export default function MyOrdersPage() {
   const dispatch = useAppDispatch();
-  const { items} = useAppSelector((store) => store.orders);
+  const { items,status} = useAppSelector((store) => store.orders);
 
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState("all");
 
   const filteredOrders = items.filter((order) => {
-    const matchesSearch = order.id
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
+        const matchesSearch = items.filter((item)=>item.id.toLowerCase().includes(searchTerm) || item.orderStatus?.toLowerCase().includes(searchTerm) || item.Payment?.paymentMethod.toLowerCase().includes(searchTerm) || item.totalPrice == parseInt(searchTerm))
+
     const matchesStatus =
       statusFilter === "all" || order.orderStatus === statusFilter;
     return matchesSearch && matchesStatus;
@@ -42,6 +41,14 @@ export default function MyOrdersPage() {
   useEffect(() => {
     dispatch(fetchMyOrders());
   }, [dispatch]);
+  
+if (status === "loading") {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <p className="text-gray-700 text-lg">Loading orders...</p>
+    </div>
+  );
+}
 
   return (
     <div className="min-h-screen bg-gray-50">

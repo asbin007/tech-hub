@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { fetchMyOrderDetails } from "../../store/orderSlice";
+import { fetchMyOrderDetails,  cancelOrderAPI } from "../../store/orderSlice";
 import { Status } from "../../globals/types/types";
 import { OrderStatus } from "../checkout/types";
 
@@ -44,7 +44,6 @@ function Toast({
   );
 }
 
-// Helper function to get status color
 const getStatusColor = (status: string) => {
   switch (status) {
     case OrderStatus.Delivered:
@@ -62,7 +61,6 @@ const getStatusColor = (status: string) => {
   }
 };
 
-// Check if order can be canceled
 const canCancelOrder = (status: OrderStatus) => {
   return status === OrderStatus.Pending || status === OrderStatus.Preparation;
 };
@@ -84,11 +82,10 @@ export default function OrderDetailsPage() {
     }
   }, [dispatch, id]);
 
-  // Find the order from orderDetails
   const order = orderDetails.find((detail) => detail.orderId === id);
+
   const CLOUDINARY_VERSION = "v1750340657";
 
-  // Handle loading and error states
   if (status === Status.LOADING) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -122,15 +119,32 @@ export default function OrderDetailsPage() {
     );
   }
 
+  // Cancel order handler
+  const handleCancelOrder = async () => {
+    if (!id) return;
+    setIsLoading(true);
+    try {
+      await dispatch(cancelOrderAPI(id)).unwrap();
+      setToast({ message: "Order cancelled successfully", type: "success" });
+      setIsCancelModalOpen(false);
+      
+      // Optionally refetch order details after cancel
+      dispatch(fetchMyOrderDetails(id));
+    } catch  {
+      setToast({ message: "Failed to cancel order", type: "error" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Calculate order summary
-  const subtotal = order.Product.price * order.quantity;
+  const subtotal = order?.Product?.price * order?.quantity || 0;
   const shipping = 10; // Example shipping cost
   const tax = subtotal * 0.1; // Example 10% tax
   const total = subtotal + shipping + tax;
 
-  // Prepare image URL for Cloudinary
   const rawImagePath =
-    order.Product.image && order.Product.image.length > 0
+    order?.Product?.image && order.Product.image.length > 0
       ? order.Product.image[0]
       : "";
 
@@ -141,7 +155,7 @@ export default function OrderDetailsPage() {
 
   const imageUrl = rawImagePath
     ? `https://res.cloudinary.com/dxpe7jikz/image/upload/${CLOUDINARY_VERSION}${pathWithSlash}.jpg`
-    : "/placeholder.jpg"; // fallback image
+    : "/placeholder.jpg";
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -166,24 +180,26 @@ export default function OrderDetailsPage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
-                Order {order.id}
+                Order {order?.id}
               </h1>
               <p className="text-gray-600">
-                Placed on {new Date(order.createdAt).toLocaleDateString()}
+                Placed on {new Date(order?.createdAt || "").toLocaleDateString()}
               </p>
             </div>
 
             <div className="flex items-center gap-3">
               <span
                 className={`px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(
-                  order.Order.orderStatus
+                  order?.Order?.orderStatus || ""
                 )}`}
               >
-                {order.Order.orderStatus.charAt(0).toUpperCase() +
-                  order.Order.orderStatus.slice(1)}
+                {order?.Order?.orderStatus
+                  ? order.Order.orderStatus.charAt(0).toUpperCase() +
+                    order.Order.orderStatus.slice(1)
+                  : ""}
               </span>
 
-              {canCancelOrder(order.Order.orderStatus) && (
+              {canCancelOrder(order?.Order?.orderStatus) && (
                 <button
                   onClick={() => setIsCancelModalOpen(true)}
                   className="px-4 py-2 bg-white text-red-600 border border-red-300 rounded-md hover:bg-red-50"
@@ -201,12 +217,11 @@ export default function OrderDetailsPage() {
             <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
               <div className="flex items-center gap-2 mb-4">
                 <AlertTriangle className="h-5 w-5 text-red-600" />
-                <h3 className="text-lg font-medium">Cancel Order {order.id}</h3>
+                <h3 className="text-lg font-medium">Cancel Order {order?.id}</h3>
               </div>
               <p className="text-sm text-gray-600 mb-6">
-                Are you sure you want to cancel this order? This action cannot
-                be undone. You will receive a full refund within 3-5 business
-                days.
+                Are you sure you want to cancel this order? This action cannot be
+                undone. You will receive a full refund within 3-5 business days.
               </p>
               <div className="flex justify-end gap-3">
                 <button
@@ -216,7 +231,7 @@ export default function OrderDetailsPage() {
                   Keep Order
                 </button>
                 <button
-                  // onClick={handleCancelOrder}
+                  onClick={handleCancelOrder}
                   disabled={isLoading}
                   className={`px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 ${
                     isLoading ? "opacity-50 cursor-not-allowed" : ""
@@ -233,14 +248,14 @@ export default function OrderDetailsPage() {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Order Status & Tracking */}
-            {order.Order.orderStatus !== OrderStatus.Cancelled && (
+            {order?.Order?.orderStatus !== OrderStatus.Cancelled && (
               <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
                 <h3 className="text-lg font-medium flex items-center gap-2 mb-4">
                   <Truck className="h-5 w-5" />
                   Order Status
                 </h3>
                 <div className="space-y-4">
-                  {order.Order.orderStatus === OrderStatus.Delivered && (
+                  {order?.Order?.orderStatus === OrderStatus.Delivered && (
                     <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
                       <CheckCircle className="h-5 w-5 text-green-600" />
                       <div>
@@ -253,27 +268,23 @@ export default function OrderDetailsPage() {
                     </div>
                   )}
 
-                  {order.Order.orderStatus === OrderStatus.Ontheway && (
+                  {order?.Order?.orderStatus === OrderStatus.Ontheway && (
                     <div className="space-y-2">
                       <p className="text-sm text-gray-600">
                         <span className="font-medium">Tracking Number:</span> TBD
                       </p>
                       <p className="text-sm text-gray-600">
                         <span className="font-medium">Estimated Delivery:</span>{" "}
-                        {new Date(
-                          Date.now() + 7 * 24 * 60 * 60 * 1000
-                        ).toLocaleDateString()}
+                        {new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString()}
                       </p>
                     </div>
                   )}
 
-                  {(order.Order.orderStatus === OrderStatus.Preparation ||
-                    order.Order.orderStatus === OrderStatus.Pending) && (
+                  {(order?.Order?.orderStatus === OrderStatus.Preparation ||
+                    order?.Order?.orderStatus === OrderStatus.Pending) && (
                     <p className="text-sm text-gray-600">
                       <span className="font-medium">Estimated Delivery:</span>{" "}
-                      {new Date(
-                        Date.now() + 7 * 24 * 60 * 60 * 1000
-                      ).toLocaleDateString()}
+                      {new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString()}
                     </p>
                   )}
                 </div>
@@ -290,30 +301,30 @@ export default function OrderDetailsPage() {
                 <div className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg">
                   <img
                     src={imageUrl}
-                    alt={order.Product.name}
+                    alt={order?.Product?.name}
                     width={80}
                     height={80}
                     className="rounded-md object-cover"
                   />
                   <div className="flex-1">
                     <h4 className="font-medium text-gray-900">
-                      {order.Product.name}
+                      {order?.Product?.name}
                     </h4>
                     <p className="text-sm text-gray-600">
-                      Quantity: {order.quantity}
+                      Quantity: {order?.quantity}
                     </p>
                     <p className="text-sm text-gray-600">
-                      Category: {order.Product.Category.categoryName}
+                      Category: {order?.Product?.Category?.categoryName}
                     </p>
                   </div>
                   <div className="text-right">
                     <p className="font-medium text-gray-900">
-                      ${order.Product.price.toFixed(2)}
+                      रु{order?.Product?.price.toFixed(2)}
                     </p>
-                    {order.quantity > 1 && (
+                    {order?.quantity > 1 && (
                       <p className="text-sm text-gray-600">
-                        ${(order.Product.price * order.quantity).toFixed(2)}{" "}
-                        total
+                        रु
+                        {(order.Product.price * order.quantity).toFixed(2)} total
                       </p>
                     )}
                   </div>
@@ -330,20 +341,20 @@ export default function OrderDetailsPage() {
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
                   <span>Subtotal</span>
-                  <span>${subtotal.toFixed(2)}</span>
+                  <span>रु{subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Shipping</span>
-                  <span>${shipping.toFixed(2)}</span>
+                  <span>रु{shipping.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Tax</span>
-                  <span>${tax.toFixed(2)}</span>
+                  <span>रु{tax.toFixed(2)}</span>
                 </div>
                 <hr className="border-gray-200" />
                 <div className="flex justify-between font-medium">
                   <span>Total</span>
-                  <span>${total.toFixed(2)}</span>
+                  <span>रु{total.toFixed(2)}</span>
                 </div>
               </div>
             </div>
@@ -356,12 +367,12 @@ export default function OrderDetailsPage() {
               </h3>
               <div className="text-sm space-y-1">
                 <p className="font-medium">
-                  {order.Order.firstName} {order.Order.lastName}
+                  {order?.Order?.firstName} {order?.Order?.lastName}
                 </p>
-                <p>{order.Order.addressLine}</p>
-                <p>{order.Order.street}</p>
+                <p>{order?.Order?.addressLine}</p>
+                <p>{order?.Order?.street}</p>
                 <p>
-                  {order.Order.city}, {order.Order.state} {order.Order.zipcode}
+                  {order?.Order?.city}, {order?.Order?.state} {order?.Order?.zipcode}
                 </p>
               </div>
             </div>
@@ -374,10 +385,10 @@ export default function OrderDetailsPage() {
               </h3>
               <div className="text-sm">
                 <p className="font-medium">
-                  {order.Order.Payment.paymentMethod}
+                  {order?.Order?.Payment?.paymentMethod}
                 </p>
                 <p className="text-gray-600">
-                  Status: {order.Order.Payment.paymentStatus}
+                  Status: {order?.Order?.Payment?.paymentStatus}
                 </p>
               </div>
             </div>

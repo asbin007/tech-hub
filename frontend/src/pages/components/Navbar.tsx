@@ -1,14 +1,14 @@
-import { useEffect, useState } from 'react';
-import { Search, Menu, Truck, Headphones, Laptop } from 'lucide-react';
-import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { logout } from '../../store/authSlice';
-import { Link, useNavigate } from 'react-router-dom';
-import { fetchCartItems } from '../../store/cartSlice';
-import toast from 'react-hot-toast';
+import { useEffect, useState } from "react";
+import { Search, Menu, Truck, Headphones, Laptop } from "lucide-react";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { logout } from "../../store/authSlice";
+import { Link, useNavigate } from "react-router-dom";
+import { fetchCartItems } from "../../store/cartSlice";
+import toast from "react-hot-toast";
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [isLogin, setIsLogin] = useState(false);
 
   const reduxToken = useAppSelector((store) => store.auth.user.token);
@@ -17,7 +17,7 @@ const Navbar = () => {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    const localToken = localStorage.getItem('token');
+    const localToken = localStorage.getItem("token");
     const loggedIn = !!reduxToken || !!localToken;
     setIsLogin(loggedIn);
 
@@ -30,37 +30,37 @@ const Navbar = () => {
   const handleCartClick = (e) => {
     if (!isLogin) {
       e.preventDefault();
-      toast.error('Please log in to view your cart', {
+      toast.error("Please log in to view your cart", {
         duration: 3000,
-        position: 'top-center',
+        position: "top-center",
         style: {
-          background: '#dc2626',
-          color: '#ffffff',
-          padding: '12px 16px',
-          borderRadius: '8px',
+          background: "#dc2626",
+          color: "#ffffff",
+          padding: "12px 16px",
+          borderRadius: "8px",
         },
       });
     } else if (cartItems.length === 0) {
       e.preventDefault();
-      toast.error('Your cart is empty. Add items to proceed.', {
+      toast.error("Your cart is empty. Add items to proceed.", {
         duration: 3000,
-        position: 'top-center',
+        position: "top-center",
         style: {
-          background: '#f97316', // orange
-          color: '#ffffff',
-          padding: '12px 16px',
-          borderRadius: '8px',
+          background: "#f97316", // orange
+          color: "#ffffff",
+          padding: "12px 16px",
+          borderRadius: "8px",
         },
       });
     }
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem("token");
     setIsLogin(false);
     setIsMobileMenuOpen(false);
     dispatch(logout());
-    navigate('/');
+    navigate("/");
   };
 
   return (
@@ -79,10 +79,16 @@ const Navbar = () => {
             </div>
           </div>
           <div className="flex items-center gap-4 mt-2 sm:mt-0">
-            <Link to="/track-order" className="hover:text-gray-900 transition-colors">
+            <Link
+              to="/track-order"
+              className="hover:text-gray-900 transition-colors"
+            >
               Track Order
             </Link>
-            <Link to="/support" className="hover:text-gray-900 transition-colors">
+            <Link
+              to="/support"
+              className="hover:text-gray-900 transition-colors"
+            >
               Support
             </Link>
           </div>
@@ -91,7 +97,11 @@ const Navbar = () => {
         {/* Main header */}
         <div className="flex items-center justify-between py-4">
           <div className="flex items-center gap-4 sm:gap-8 flex-1">
-            <Link to="/" className="flex items-center gap-3" aria-label="TechHub Home">
+            <Link
+              to="/"
+              className="flex items-center gap-3"
+              aria-label="TechHub Home"
+            >
               <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-xl">
                 <Laptop className="h-6 w-6 text-white" />
               </div>
@@ -100,23 +110,44 @@ const Navbar = () => {
               </span>
             </Link>
 
-            <nav className="hidden lg:flex items-center gap-6 xl:gap-8" role="navigation">
-              <Link to="/all-laptops" className="text-sm font-medium hover:text-blue-600 transition-colors">
+            <nav
+              className="hidden lg:flex items-center gap-6 xl:gap-8"
+              role="navigation"
+            >
+              <Link
+                to="/all-laptops"
+                className="text-sm font-medium hover:text-blue-600 transition-colors"
+              >
                 All Laptops
               </Link>
-              <Link to="/gaming-laptops" className="text-sm font-medium hover:text-blue-600 transition-colors">
+              <Link
+                to="/gaming-laptops"
+                className="text-sm font-medium hover:text-blue-600 transition-colors"
+              >
                 Gaming
               </Link>
-              <Link to="/business-laptops" className="text-sm font-medium hover:text-blue-600 transition-colors">
+              <Link
+                to="/business-laptops"
+                className="text-sm font-medium hover:text-blue-600 transition-colors"
+              >
                 Business
               </Link>
-              <Link to="/ultrabooks" className="text-sm font-medium hover:text-blue-600 transition-colors">
+              <Link
+                to="/ultrabooks"
+                className="text-sm font-medium hover:text-blue-600 transition-colors"
+              >
                 Ultrabooks
               </Link>
-              <Link to="/deals" className="text-sm font-medium text-red-600 hover:text-red-700 transition-colors">
+              <Link
+                to="/deals"
+                className="text-sm font-medium text-red-600 hover:text-red-700 transition-colors"
+              >
                 🔥 Hot Deals
               </Link>
-              <Link to="/my-orders" className="text-sm font-medium hover:text-blue-600 transition-colors">
+              <Link
+                to="/my-orders"
+                className="text-sm font-medium hover:text-blue-600 transition-colors"
+              >
                 My Orders
               </Link>
             </nav>
@@ -124,6 +155,15 @@ const Navbar = () => {
 
           <div className="flex items-center gap-2 sm:gap-4">
             <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (searchQuery.trim()) {
+                  navigate(
+                    `/search?query=${encodeURIComponent(searchQuery.trim())}`
+                  );
+                  setSearchQuery(""); // optional: clear input after search
+                }
+              }}
               className="hidden md:flex items-center gap-2 bg-gray-50 rounded-xl px-3 sm:px-4 py-2 w-48 sm:w-64 lg:w-80 border"
             >
               <Search className="h-4 w-4 text-gray-500" />
@@ -144,7 +184,10 @@ const Navbar = () => {
                 Logout
               </button>
             ) : (
-              <Link to="/login" className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+              <Link
+                to="/login"
+                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+              >
                 Login
               </Link>
             )}
@@ -185,21 +228,31 @@ const Navbar = () => {
         </div>
 
         {/* Mobile menu */}
-        <div className={`lg:hidden ${isMobileMenuOpen ? 'block' : 'hidden'}`}>
+        <div className={`lg:hidden ${isMobileMenuOpen ? "block" : "hidden"}`}>
           <nav className="flex flex-col gap-4 p-4">
             <Link to="/all-laptops" onClick={() => setIsMobileMenuOpen(false)}>
               All Laptops
             </Link>
-            <Link to="/gaming-laptops" onClick={() => setIsMobileMenuOpen(false)}>
+            <Link
+              to="/gaming-laptops"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
               Gaming
             </Link>
-            <Link to="/business-laptops" onClick={() => setIsMobileMenuOpen(false)}>
+            <Link
+              to="/business-laptops"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
               Business
             </Link>
             <Link to="/ultrabooks" onClick={() => setIsMobileMenuOpen(false)}>
               Ultrabooks
             </Link>
-            <Link to="/deals" onClick={() => setIsMobileMenuOpen(false)} className="text-red-600">
+            <Link
+              to="/deals"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="text-red-600"
+            >
               🔥 Hot Deals
             </Link>
             <Link to="/my-orders" onClick={() => setIsMobileMenuOpen(false)}>

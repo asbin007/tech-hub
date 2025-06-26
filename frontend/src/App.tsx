@@ -20,6 +20,7 @@ import { useEffect } from "react";
 import { loadUserFromStorage } from "./store/authSlice";
 import MyOrdersPage from "./pages/order/OrderPage";
 import OrderDetailsPage from "./pages/order/OrderDetaills";
+import SearchResults from "./pages/products/SerarchResults";
 
 export default function App() {
   const dispatch = useAppDispatch();
@@ -31,8 +32,10 @@ export default function App() {
   return (
     <BrowserRouter>
       <div className="min-h-screen bg-gray-100">
+
         <Navbar />
         <Toaster position="top-center" reverseOrder={false} />
+        
         <Routes>
           {/* Home Route */}
           <Route path="/" element={<Home />} />
@@ -48,6 +51,8 @@ export default function App() {
           <Route path="/:categoryName/:brand" element={<ProductFilters />} />
           <Route path="/all-laptops" element={<ProductFilters />} />
           <Route path="/:categoryName" element={<ProductFilters />} />
+          <Route path="/search" element={<SearchResults />} />
+
 
           {/* Cart and Checkout */}
           <Route path="/my-cart" element={<MyCart />} />
@@ -55,7 +60,7 @@ export default function App() {
 
           {/* my-order */}
           <Route path="/my-orders" element={<MyOrdersPage />} />
-          <Route path="/my-order/:id" element={<OrderDetailsPage />} />
+          <Route path="/my-orders/:id" element={<OrderDetailsPage />} />
         </Routes>
       </div>
     </BrowserRouter>

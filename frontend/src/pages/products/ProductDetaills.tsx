@@ -176,7 +176,7 @@ export default function ProductDetailsPage() {
           </div>
 
           <div className="text-3xl font-bold text-gray-900">
-            ${totalPrice.toLocaleString()}
+            रु{totalPrice.toLocaleString()}
           </div>
 
           <p className="text-sm text-gray-600">
@@ -219,7 +219,7 @@ export default function ProductDetailsPage() {
               type="button"
             >
               <ShoppingCart className="w-5 h-5 mr-2" />
-              Add to Cart - ${totalPrice.toLocaleString()}
+              Add to Cart - रु{totalPrice.toLocaleString()}
             </button>
             <button
               className="w-full border border-gray-300 py-3 px-6 rounded-md flex items-center justify-center hover:bg-gray-100"
