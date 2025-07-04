@@ -97,9 +97,7 @@ export function loginUser(data: ILoginUser) {
 
         if (token) {
           localStorage.setItem("token", token);
-          // dispatch(setUser({ id, username, email, password: null, token }));
-          // dispatch(setStatus(Status.SUCCESS))
-          // console.log(id,email,username)
+         
           const userData: IUser = {
             id,
             username,

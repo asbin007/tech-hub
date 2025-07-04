@@ -1,6 +1,10 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { Status } from "../globals/types/types";
-import { OrderStatus, type IOrderDetail, type PaymentStatus } from "../pages/checkout/types";
+import {
+  OrderStatus,
+  type IOrderDetail,
+  type PaymentStatus,
+} from "../pages/checkout/types";
 import type { AppDispatch } from "./store";
 import { APIS } from "../globals/http";
 
@@ -89,8 +93,51 @@ const orderSlice = createSlice({
         data.Order.orderStatus = OrderStatus.Cancelled;
       }
     },
+    updatePaymentStatusinSlice(
+      state: IOrder,
+      action: PayloadAction<{
+        paymentStatus: PaymentStatus;
+        orderId: string;
+        paymentId: string;
+      }>
+    ) {
+      const { paymentStatus, orderId } = action.payload;
+
+      const updatedItems = state.items.map((item) =>
+        item.orderId === orderId
+          ? {
+              ...item,
+              Payment: {
+                ...item.Payment,
+                paymentStatus,
+                paymentMethod: item.Payment?.paymentMethod ?? PaymentMethod.Cod,
+              },
+            }
+          : item
+      );
+
+      const updatedDetails = state.orderDetails.map((detail) => {
+        if (detail.orderId === orderId && detail.Order) {
+          return {
+            ...detail,
+            Order: {
+              ...detail.Order,
+              Payment: {
+                ...detail.Order.Payment,
+                paymentStatus,
+              },
+            },
+          };
+        }
+        return detail;
+      });
+
+      state.items = updatedItems;
+      state.orderDetails = updatedDetails;
+    },
   },
 });
+
 export default orderSlice.reducer;
 export const {
   setItems,
@@ -98,6 +145,7 @@ export const {
   setKhaltiUrl,
   setOrderDetails,
   updateOrderStatusToCancel,
+  updatePaymentStatusinSlice,
 } = orderSlice.actions;
 
 export function postOrderItem(data: IData) {
@@ -107,7 +155,8 @@ export function postOrderItem(data: IData) {
       if (res.status === 200) {
         dispatch(setStatus(Status.SUCCESS));
         dispatch(setItems(res.data.data));
-        console.log(res.data.url, "Url");
+        console.log(res.data.url);
+
         if (res.data.url) {
           dispatch(setKhaltiUrl(res.data.url));
           window.location.href = res.data.url;
@@ -115,6 +164,7 @@ export function postOrderItem(data: IData) {
           dispatch(setStatus(Status.ERROR));
         }
       }
+      
     } catch (error) {
       dispatch(setStatus(Status.ERROR));
       console.log(error);
@@ -155,6 +205,7 @@ export function fetchMyOrderDetails(id: string) {
     }
   };
 }
+
 export function cancelOrderAPI(id: string) {
   return async function cancelOrderAPIThunk(dispatch: AppDispatch) {
     try {

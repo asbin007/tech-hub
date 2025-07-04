@@ -15,7 +15,6 @@ export interface IProduct {
   isNew: boolean;
   size: string[];
   color: string[];
-  badge: string;
   discount: number;
   RAM: string[];
   ROM: string[];

@@ -3,9 +3,14 @@
 import { useEffect, useState } from "react";
 import { Package, Search, Filter, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { OrderStatus } from "../checkout/types";
+import { OrderStatus, PaymentStatus } from "../checkout/types";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { fetchMyOrders } from "../../store/orderSlice";
+import {
+  fetchMyOrders,
+  updateOrderStatusToCancel,
+  updatePaymentStatusinSlice,
+} from "../../store/orderSlice";
+import { socket } from "../../App";
 
 // Status color mapping
 const getStatusColor = (status: OrderStatus) => {
@@ -25,30 +30,53 @@ const getStatusColor = (status: OrderStatus) => {
 
 export default function MyOrdersPage() {
   const dispatch = useAppDispatch();
-  const { items,status} = useAppSelector((store) => store.orders);
+  const { items, status } = useAppSelector((store) => store.orders);
 
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState("all");
 
   const filteredOrders = items.filter((order) => {
-        const matchesSearch = items.filter((item)=>item.id.toLowerCase().includes(searchTerm) || item.orderStatus?.toLowerCase().includes(searchTerm) || item.Payment?.paymentMethod.toLowerCase().includes(searchTerm) || item.totalPrice == parseInt(searchTerm))
-
-    const matchesStatus =
-      statusFilter === "all" || order.orderStatus === statusFilter;
+    const matchesSearch =
+      order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.orderStatus?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.Payment?.paymentMethod.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.totalPrice === Number(searchTerm);
+    const matchesStatus = statusFilter === "all" || order.orderStatus === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   useEffect(() => {
     dispatch(fetchMyOrders());
   }, [dispatch]);
-  
-if (status === "loading") {
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <p className="text-gray-700 text-lg">Loading orders...</p>
-    </div>
-  );
-}
+
+  useEffect(() => {
+    // Listen for order status updates
+    socket.on("statusUpdated", (data: { status: OrderStatus; orderId: string }) => {
+      dispatch(updateOrderStatusToCancel({ orderId: data.orderId }));
+    });
+
+    // Listen for payment status updates
+   socket.on(
+  "paymentStatusUpdated",
+  (data: { paymentStatus: PaymentStatus; orderId: string; paymentId: string }) => {
+    dispatch(updatePaymentStatusinSlice(data));
+  }
+);
+
+
+    return () => {
+      socket.off("statusUpdated");
+      socket.off("paymentStatusUpdated");
+    };
+  }, [dispatch]);
+
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-700 text-lg">Loading orders...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -94,12 +122,8 @@ if (status === "loading") {
           {filteredOrders.length === 0 ? (
             <div className="bg-white p-8 rounded-lg shadow-md border border-gray-200 text-center">
               <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No orders found
-              </h3>
-              <p className="text-gray-600">
-                Try adjusting your search or filter criteria
-              </p>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No orders found</h3>
+              <p className="text-gray-600">Try adjusting your search or filter criteria</p>
             </div>
           ) : (
             filteredOrders.map((order) => (
@@ -110,16 +134,13 @@ if (status === "loading") {
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-4 mb-3">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {order.id}
-                      </h3>
+                      <h3 className="text-lg font-semibold text-gray-900">{order.id}</h3>
                       <span
                         className={`px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(
                           order.orderStatus as unknown as OrderStatus
                         )}`}
                       >
-                        {order.orderStatus.charAt(0).toUpperCase() +
-                          order.orderStatus.slice(1)}
+                        {order.orderStatus.charAt(0).toUpperCase() + order.orderStatus.slice(1)}
                       </span>
                     </div>
 
@@ -138,9 +159,7 @@ if (status === "loading") {
                         <span className="font-medium">Total:</span>
                         <br />
                         <span className="text-lg font-semibold text-gray-900">
-                          {order.totalPrice
-                            ? `Rs. ${order.totalPrice.toFixed(2)}`
-                            : "N/A"}
+                          {order.totalPrice ? `Rs. ${order.totalPrice.toFixed(2)}` : "N/A"}
                         </span>
                       </div>
                     </div>

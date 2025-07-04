@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import {
   ArrowLeft,
@@ -6,37 +8,32 @@ import {
   MapPin,
   CreditCard,
   AlertTriangle,
-  CheckCircle,
 } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { fetchMyOrderDetails,  cancelOrderAPI } from "../../store/orderSlice";
+import { cancelOrderAPI, fetchMyOrderDetails, updatePaymentStatusinSlice } from "../../store/orderSlice";
 import { Status } from "../../globals/types/types";
-import { OrderStatus } from "../checkout/types";
+import { OrderStatus, PaymentStatus } from "../checkout/types";
+import { socket } from "../../App";
 
-function Toast({
-  message,
-  type,
-  onClose,
-}: {
+interface ToastProps {
   message: string;
   type: "success" | "error";
   onClose: () => void;
-}) {
+}
+
+function Toast({ message, type, onClose }: ToastProps) {
   return (
     <div
-      className={`fixed top-4 right-4 p-4 rounded-md shadow-lg border ${
+      className={`fixed top-4 right-4 p-4 rounded-md shadow-lg border z-50 ${
         type === "success"
           ? "bg-green-50 border-green-200 text-green-800"
           : "bg-red-50 border-red-200 text-red-800"
       }`}
     >
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         <span>{message}</span>
-        <button
-          onClick={onClose}
-          className="ml-4 text-sm font-medium hover:underline"
-        >
+        <button onClick={onClose} className="text-sm font-medium underline">
           Close
         </button>
       </div>
@@ -44,7 +41,7 @@ function Toast({
   );
 }
 
-const getStatusColor = (status: string) => {
+const getStatusColor = (status: OrderStatus | undefined) => {
   switch (status) {
     case OrderStatus.Delivered:
       return "bg-green-100 text-green-800 border-green-300";
@@ -61,65 +58,123 @@ const getStatusColor = (status: string) => {
   }
 };
 
-const canCancelOrder = (status: OrderStatus) => {
-  return status === OrderStatus.Pending || status === OrderStatus.Preparation;
+const canCancelOrder = (status: OrderStatus | undefined) =>
+  [OrderStatus.Pending, OrderStatus.Preparation, OrderStatus.Ontheway].includes(
+    status ?? OrderStatus.Pending
+  );
+
+const getPaymentMethodLabel = (method?: string) => {
+  switch (method) {
+    case "esewa":
+      return "eSewa";
+    case "khalti":
+      return "Khalti";
+    case "cod":
+      return "Cash on Delivery";
+    default:
+      return "Unknown";
+  }
+};
+
+const getPaymentStatusLabel = (status?: PaymentStatus) => {
+  switch (status) {
+    case PaymentStatus.Paid:
+      return "Paid";
+    case PaymentStatus.Unpaid:
+      return "Unpaid";
+    default:
+      return "Unknown";
+  }
 };
 
 export default function OrderDetailsPage() {
   const dispatch = useAppDispatch();
   const { orderDetails, status } = useAppSelector((store) => store.orders);
-  const { id } = useParams<{ id: string }>();
-  const [isLoading, setIsLoading] = useState(false);
+  const { id } = useParams();
   const [toast, setToast] = useState<{
     message: string;
     type: "success" | "error";
   } | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
 
+  // Log orderDetails when component mounts or orderDetails changes
   useEffect(() => {
     if (id) {
-      dispatch(fetchMyOrderDetails(id));
+      console.log("Before fetching order details for ID:", id);
+      dispatch(fetchMyOrderDetails(id)).then(() => {
+        console.log("After fetching order details:", orderDetails);
+        console.log("Current paymentStatus:", orderDetails.find((o) => o.orderId === id)?.Order?.Payment?.paymentStatus || "Not found");
+      });
     }
   }, [dispatch, id]);
 
-  const order = orderDetails.find((detail) => detail.orderId === id);
+  // Log orderDetails when it changes
+  useEffect(() => {
+    console.log("orderDetails updated:", orderDetails);
+    console.log("Current paymentStatus:", orderDetails.find((o) => o.orderId === id)?.Order?.Payment?.paymentStatus || "Not found");
+  }, [orderDetails, id]);
 
+  // Socket listeners for live updates
+  useEffect(() => {
+    if (!id) return;
+
+    const onStatusUpdated = (data: { orderId: string; status: OrderStatus }) => {
+      console.log("Received statusUpdated event:", data);
+      if (data.orderId === id) {
+        dispatch(fetchMyOrderDetails(id)).then(() => {
+          console.log("After statusUpdated fetch, paymentStatus:", orderDetails.find((o) => o.orderId === id)?.Order?.Payment?.paymentStatus || "Not found");
+        });
+      }
+    };
+
+    const onPaymentStatusUpdated = (data: {
+      orderId: string;
+      paymentId: string;
+      status?: PaymentStatus;
+      paymentStatus?: PaymentStatus; 
+    }) => {
+      console.log("Received paymentStatusUpdated event:", data);
+      if (data.orderId === id) {
+        const newPaymentStatus = data.paymentStatus || data.status;
+        if (newPaymentStatus) {
+          dispatch(
+            updatePaymentStatusinSlice({
+              paymentStatus: newPaymentStatus,
+              orderId: data.orderId,
+              paymentId: data.paymentId,
+            })
+          );
+          dispatch(fetchMyOrderDetails(id)).then(() => {
+            console.log("After paymentStatusUpdated fetch, paymentStatus:", orderDetails.find((o) => o.orderId === id)?.Order?.Payment?.paymentStatus || "Not found");
+          });
+        } else {
+          console.error("Invalid paymentStatus in paymentStatusUpdated event:", data);
+        }
+      }
+    };
+
+    console.log("Socket listeners set up for order ID:", id);
+    socket.on("statusUpdated", onStatusUpdated);
+    socket.on("paymentStatusUpdated", onPaymentStatusUpdated);
+
+    return () => {
+      socket.off("statusUpdated", onStatusUpdated);
+      socket.off("paymentStatusUpdated", onPaymentStatusUpdated);
+    };
+  }, [dispatch, id, orderDetails]);
+
+  const order = orderDetails.find((o) => o.orderId === id);
   const CLOUDINARY_VERSION = "v1750340657";
 
-  if (status === Status.LOADING) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white p-8 rounded-lg shadow-md border border-gray-200 w-full max-w-md text-center">
-          <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Loading...</h3>
-          <p className="text-gray-600 mb-4">Fetching order details.</p>
-        </div>
-      </div>
-    );
-  }
+  const rawImage = order?.Product?.image?.[0] || "";
+  const imageUrl = rawImage
+    ? `https://res.cloudinary.com/dxpe7jikz/image/upload/${CLOUDINARY_VERSION}/${rawImage.replace(
+        "/uploads",
+        ""
+      )}.jpg`
+    : "/placeholder.jpg";
 
-  if (status === Status.ERROR || !order) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white p-8 rounded-lg shadow-md border border-gray-200 w-full max-w-md text-center">
-          <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            Order not found
-          </h3>
-          <p className="text-gray-600 mb-4">
-            The order you're looking for doesn't exist.
-          </p>
-          <Link to="/my-orders">
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-              Back to Orders
-            </button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  // Cancel order handler
   const handleCancelOrder = async () => {
     if (!id) return;
     setIsLoading(true);
@@ -127,35 +182,47 @@ export default function OrderDetailsPage() {
       await dispatch(cancelOrderAPI(id)).unwrap();
       setToast({ message: "Order cancelled successfully", type: "success" });
       setIsCancelModalOpen(false);
-      
-      // Optionally refetch order details after cancel
-      dispatch(fetchMyOrderDetails(id));
-    } catch  {
+      dispatch(fetchMyOrderDetails(id)).then(() => {
+        console.log("After cancelOrder, paymentStatus:", orderDetails.find((o) => o.orderId === id)?.Order?.Payment?.paymentStatus || "Not found");
+      });
+    } catch {
       setToast({ message: "Failed to cancel order", type: "error" });
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Calculate order summary
-  const subtotal = order?.Product?.price * order?.quantity || 0;
-  const shipping = 10; // Example shipping cost
-  const tax = subtotal * 0.1; // Example 10% tax
+  const subtotal = (order?.Product?.price || 0) * (order?.quantity ?? 0);
+  const shipping = 10;
+  const tax = subtotal * 0.1;
   const total = subtotal + shipping + tax;
 
-  const rawImagePath =
-    order?.Product?.image && order.Product.image.length > 0
-      ? order.Product.image[0]
-      : "";
+  if (status === Status.LOADING) {
+    return (
+      <div className="min-h-screen flex justify-center items-center bg-gray-50">
+        <div className="p-6 bg-white shadow rounded text-center">
+          <Package className="mx-auto mb-2 text-gray-500" size={40} />
+          <h2 className="font-semibold text-lg">Loading...</h2>
+        </div>
+      </div>
+    );
+  }
 
-  const cleanedPath = rawImagePath.replace("/uploads", "");
-  const pathWithSlash = cleanedPath.startsWith("/")
-    ? cleanedPath
-    : "/" + cleanedPath;
-
-  const imageUrl = rawImagePath
-    ? `https://res.cloudinary.com/dxpe7jikz/image/upload/${CLOUDINARY_VERSION}${pathWithSlash}.jpg`
-    : "/placeholder.jpg";
+  if (status === Status.ERROR || !order) {
+    return (
+      <div className="min-h-screen flex justify-center items-center bg-gray-50">
+        <div className="p-6 bg-white shadow rounded text-center">
+          <Package className="mx-auto mb-2 text-gray-500" size={40} />
+          <h2 className="font-semibold text-lg">Order not found</h2>
+          <Link to="/my-orders">
+            <button className="mt-4 px-4 py-2 bg-blue-600 text-white rounded">
+              Back to Orders
+            </button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -166,231 +233,169 @@ export default function OrderDetailsPage() {
           onClose={() => setToast(null)}
         />
       )}
-      <div className="max-w-4xl mx-auto p-6">
-        {/* Header */}
-        <div className="mb-8">
-          <Link
-            to="/my-orders"
-            className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Orders
-          </Link>
 
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Order {order?.id}
-              </h1>
-              <p className="text-gray-600">
-                Placed on {new Date(order?.createdAt || "").toLocaleDateString()}
-              </p>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <span
-                className={`px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(
-                  order?.Order?.orderStatus || ""
-                )}`}
+      <div className="max-w-5xl mx-auto p-4 sm:p-6 space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between gap-4">
+          <div>
+            <Link
+              to="/my-orders"
+              className="text-blue-600 hover:underline flex items-center gap-1"
+            >
+              <ArrowLeft size={16} />
+              Back to Orders
+            </Link>
+            <h1 className="text-2xl font-semibold mt-2">Order #{order.id}</h1>
+            <p className="text-sm text-gray-600">
+              Placed on {new Date(order?.createdAt || "").toLocaleDateString()}
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <span
+              className={`text-xs font-medium px-2 py-1 rounded-full border ${getStatusColor(
+                order?.Order?.orderStatus
+              )}`}
+            >
+              {order?.Order?.orderStatus}
+            </span>
+            {canCancelOrder(order?.Order?.orderStatus) && (
+              <button
+                onClick={() => setIsCancelModalOpen(true)}
+                className="text-red-600 border border-red-300 px-3 py-1 rounded hover:bg-red-50 text-sm"
               >
-                {order?.Order?.orderStatus
-                  ? order.Order.orderStatus.charAt(0).toUpperCase() +
-                    order.Order.orderStatus.slice(1)
-                  : ""}
-              </span>
-
-              {canCancelOrder(order?.Order?.orderStatus) && (
-                <button
-                  onClick={() => setIsCancelModalOpen(true)}
-                  className="px-4 py-2 bg-white text-red-600 border border-red-300 rounded-md hover:bg-red-50"
-                >
-                  Cancel Order
-                </button>
-              )}
-            </div>
+                Cancel Order
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Cancel Order Modal */}
+        {/* Cancel Modal */}
         {isCancelModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg w-full max-w-sm">
               <div className="flex items-center gap-2 mb-4">
-                <AlertTriangle className="h-5 w-5 text-red-600" />
-                <h3 className="text-lg font-medium">Cancel Order {order?.id}</h3>
+                <AlertTriangle className="text-red-500" />
+                <h3 className="text-lg font-semibold">Cancel Order</h3>
               </div>
-              <p className="text-sm text-gray-600 mb-6">
-                Are you sure you want to cancel this order? This action cannot be
-                undone. You will receive a full refund within 3-5 business days.
+              <p className="text-sm text-gray-600 mb-4">
+                Are you sure you want to cancel this order? This action cannot be undone.
               </p>
-              <div className="flex justify-end gap-3">
+              <div className="flex justify-end gap-2">
                 <button
                   onClick={() => setIsCancelModalOpen(false)}
-                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+                  className="px-4 py-2 text-sm bg-gray-200 rounded hover:bg-gray-300"
                 >
-                  Keep Order
+                  No
                 </button>
                 <button
                   onClick={handleCancelOrder}
                   disabled={isLoading}
-                  className={`px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 ${
+                  className={`px-4 py-2 text-sm bg-red-600 text-white rounded hover:bg-red-700 ${
                     isLoading ? "opacity-50 cursor-not-allowed" : ""
                   }`}
                 >
-                  {isLoading ? "Cancelling..." : "Cancel Order"}
+                  {isLoading ? "Cancelling..." : "Yes, Cancel"}
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Content */}
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Main Order Info */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Order Status & Tracking */}
-            {order?.Order?.orderStatus !== OrderStatus.Cancelled && (
-              <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-                <h3 className="text-lg font-medium flex items-center gap-2 mb-4">
-                  <Truck className="h-5 w-5" />
-                  Order Status
-                </h3>
-                <div className="space-y-4">
-                  {order?.Order?.orderStatus === OrderStatus.Delivered && (
-                    <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
-                      <CheckCircle className="h-5 w-5 text-green-600" />
-                      <div>
-                        <p className="font-medium text-green-900">Delivered</p>
-                        <p className="text-sm text-green-700">
-                          Delivered on{" "}
-                          {new Date(order.createdAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {order?.Order?.orderStatus === OrderStatus.Ontheway && (
-                    <div className="space-y-2">
-                      <p className="text-sm text-gray-600">
-                        <span className="font-medium">Tracking Number:</span> TBD
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        <span className="font-medium">Estimated Delivery:</span>{" "}
-                        {new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString()}
-                      </p>
-                    </div>
-                  )}
-
-                  {(order?.Order?.orderStatus === OrderStatus.Preparation ||
-                    order?.Order?.orderStatus === OrderStatus.Pending) && (
-                    <p className="text-sm text-gray-600">
-                      <span className="font-medium">Estimated Delivery:</span>{" "}
-                      {new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString()}
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Order Items */}
-            <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-              <h3 className="text-lg font-medium flex items-center gap-2 mb-4">
-                <Package className="h-5 w-5" />
-                Order Items
+            <div className="bg-white p-4 sm:p-6 rounded-lg shadow border">
+              <h3 className="font-medium flex items-center gap-2 mb-4 text-lg">
+                <Package size={18} />
+                Item
               </h3>
-              <div className="space-y-4">
-                <div className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg">
-                  <img
-                    src={imageUrl}
-                    alt={order?.Product?.name}
-                    width={80}
-                    height={80}
-                    className="rounded-md object-cover"
-                  />
-                  <div className="flex-1">
-                    <h4 className="font-medium text-gray-900">
-                      {order?.Product?.name}
-                    </h4>
-                    <p className="text-sm text-gray-600">
-                      Quantity: {order?.quantity}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      Category: {order?.Product?.Category?.categoryName}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-medium text-gray-900">
-                      रु{order?.Product?.price.toFixed(2)}
-                    </p>
-                    {order?.quantity > 1 && (
-                      <p className="text-sm text-gray-600">
-                        रु
-                        {(order.Product.price * order.quantity).toFixed(2)} total
-                      </p>
-                    )}
-                  </div>
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                <img
+                  src={imageUrl}
+                  alt="Product"
+                  className="w-24 h-24 object-cover rounded"
+                />
+                <div className="flex-1">
+                  <h4 className="font-semibold">{order.Product.name}</h4>
+                  <p className="text-sm text-gray-600">
+                    Quantity: {order.quantity}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    Category: {order.Product.Category?.categoryName}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="font-medium">
+                    रु{(order.Product.price * order.quantity).toFixed(2)}
+                  </p>
                 </div>
               </div>
             </div>
+
+            {/* Shipping Status */}
+            <div className="bg-white p-4 sm:p-6 rounded-lg shadow border">
+              <h3 className="text-lg font-medium flex gap-2 items-center mb-4">
+                <Truck size={18} />
+                Shipping
+              </h3>
+              <p className="text-sm text-gray-600">
+                Estimated delivery:{" "}
+                {new Date(
+                  Date.now() + 7 * 24 * 60 * 60 * 1000
+                ).toLocaleDateString()}
+              </p>
+            </div>
           </div>
 
-          {/* Sidebar */}
+          {/* Summary Sidebar */}
           <div className="space-y-6">
-            {/* Order Summary */}
-            <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-              <h3 className="text-lg font-medium mb-4">Order Summary</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between text-sm">
+            <div className="bg-white p-4 sm:p-6 rounded-lg shadow border">
+              <h3 className="text-lg font-medium mb-3">Summary</h3>
+              <div className="text-sm space-y-2">
+                <div className="flex justify-between">
                   <span>Subtotal</span>
                   <span>रु{subtotal.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between">
                   <span>Shipping</span>
                   <span>रु{shipping.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between">
                   <span>Tax</span>
                   <span>रु{tax.toFixed(2)}</span>
                 </div>
-                <hr className="border-gray-200" />
-                <div className="flex justify-between font-medium">
+                <hr />
+                <div className="flex justify-between font-semibold">
                   <span>Total</span>
                   <span>रु{total.toFixed(2)}</span>
                 </div>
               </div>
             </div>
 
-            {/* Shipping Address */}
-            <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-              <h3 className="text-lg font-medium flex items-center gap-2 mb-4">
-                <MapPin className="h-5 w-5" />
+            <div className="bg-white p-4 sm:p-6 rounded-lg shadow border">
+              <h3 className="text-lg font-medium mb-3 flex items-center gap-2">
+                <MapPin size={18} />
                 Shipping Address
               </h3>
-              <div className="text-sm space-y-1">
-                <p className="font-medium">
-                  {order?.Order?.firstName} {order?.Order?.lastName}
-                </p>
-                <p>{order?.Order?.addressLine}</p>
-                <p>{order?.Order?.street}</p>
-                <p>
-                  {order?.Order?.city}, {order?.Order?.state} {order?.Order?.zipcode}
-                </p>
-              </div>
+              <p className="text-sm">
+                {order.Order.firstName} {order.Order.lastName}
+              </p>
+              <p className="text-sm text-gray-600">
+                {order.Order.addressLine}, {order.Order.city},{" "}
+                {order.Order.state}
+              </p>
             </div>
 
-            {/* Payment Method */}
-            <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-              <h3 className="text-lg font-medium flex items-center gap-2 mb-4">
-                <CreditCard className="h-5 w-5" />
-                Payment Method
+            <div className="bg-white p-4 sm:p-6 rounded-lg shadow border">
+              <h3 className="text-lg font-medium mb-3 flex items-center gap-2">
+                <CreditCard size={18} />
+                Payment
               </h3>
-              <div className="text-sm">
-                <p className="font-medium">
-                  {order?.Order?.Payment?.paymentMethod}
-                </p>
-                <p className="text-gray-600">
-                  Status: {order?.Order?.Payment?.paymentStatus}
-                </p>
-              </div>
+              <p className="text-sm">
+                {getPaymentMethodLabel(order.Order.Payment?.paymentMethod)}
+              </p>
+              <p className="text-sm text-gray-600">
+                Status: {getPaymentStatusLabel(order.Order.Payment?.paymentStatus)}
+              </p>
             </div>
           </div>
         </div>

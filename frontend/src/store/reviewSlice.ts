@@ -68,6 +68,7 @@ export function fetchReview(productId: string) {
           : res.data.data?.reviews || [];
         dispatch(setReview(reviewArray)); 
         dispatch(setStatus(Status.SUCCESS));
+        console.log(reviewArray,"array")
       } else {
         dispatch(setStatus(Status.ERROR));
       }
@@ -84,8 +85,9 @@ export function createReview(data: IData) {
       const res = await APIS.post("/review", data);
 
       if (res.status === 200) {
-        dispatch(setReview(res.data.data));
+        // dispatch(setReview(res.data.data));
         dispatch(setStatus(Status.SUCCESS));
+        console.log(res.data.data,"data")
       } else {
         dispatch(setStatus(Status.ERROR));
       }

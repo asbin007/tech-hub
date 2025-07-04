@@ -4,7 +4,7 @@ import type { IProduct } from "../../store/productSlice";
 // Redefine ICardProps to match Product model
 interface ICardProps {
   product: Omit<IProduct, "image"> & {
-    image: string[]; // Image paths like "/uploads/e-shoe/filename"
+    image: string[]; 
     Category: { categoryName: string };
   };
 }
@@ -14,7 +14,7 @@ const CLOUDINARY_VERSION = "v1750340657";
 const ProductCard: React.FC<ICardProps> = ({ product }) => {
   const imageUrl =
     product.image && product.image[0]
-      ? `https://res.cloudinary.com/dxpe7jikz/image/upload/${CLOUDINARY_VERSION}${product.image[0].replace(
+      ? `https://res.cloudinary.com/dxpe7jikz/image/upload/${CLOUDINARY_VERSION}${product.image[2].replace(
           "/uploads",
           ""
         )}.jpg`
@@ -48,7 +48,9 @@ const ProductCard: React.FC<ICardProps> = ({ product }) => {
           )}
         </div>
 
+
         {/* Product Image */}
+        
         <div className="w-full h-48 overflow-hidden">
           <img
             src={imageUrl}

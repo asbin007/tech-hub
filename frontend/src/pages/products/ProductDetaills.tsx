@@ -1,5 +1,5 @@
-import  { useEffect, useState } from "react";
-import {  useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { getProducts, getSingleProduct } from "../../store/productSlice";
 import {
@@ -14,6 +14,7 @@ import { Status } from "../../globals/types/types";
 import { addToCart } from "../../store/cartSlice";
 import toast from "react-hot-toast";
 import Review from "./Review";
+import { fetchReview } from "../../store/reviewSlice";
 
 export default function ProductDetailsPage() {
   const isLoggedIn = useAppSelector(
@@ -33,15 +34,18 @@ export default function ProductDetailsPage() {
 
   useEffect(() => {
     if (id) {
-      dispatch(getProducts())
+      dispatch(getProducts());
       dispatch(getSingleProduct(id));
+      dispatch(fetchReview(id))
     }
   }, [dispatch, id]);
 
   useEffect(() => {
     if (product) {
       const cleanString = (value: string) =>
-        typeof value === "string" ? value.replace(/^\["|"\]$/g, "") : value || "";
+        typeof value === "string"
+          ? value.replace(/^\["|"\]$/g, "")
+          : value || "";
 
       setSelectedRAM(cleanString(product.RAM?.[0]));
       setSelectedStorage(cleanString(product.ROM?.[0]));
@@ -79,7 +83,8 @@ export default function ProductDetailsPage() {
     "2TB": 1000,
   };
 
-  const parsedRam = ramPrices[selectedRAM.toUpperCase() as keyof typeof ramPrices] || 0;
+  const parsedRam =
+    ramPrices[selectedRAM.toUpperCase() as keyof typeof ramPrices] || 0;
   const parsedStorage =
     storagePrices[
       selectedStorage.toUpperCase() as keyof typeof storagePrices
@@ -92,12 +97,21 @@ export default function ProductDetailsPage() {
       return;
     }
 
-    if (!product?.id || !selectedSize || !selectedColor || !selectedRAM || !selectedStorage) {
+    if (
+      !product?.id ||
+      !selectedSize ||
+      !selectedColor ||
+      !selectedRAM ||
+      !selectedStorage
+    ) {
       toast.error("Please select size, color, RAM, and storage first.");
       return;
     }
 
     const cleanString = (value: string) => value.replace(/^\["|"\]$/g, "");
+
+
+    toast.success("Item added to cart successfully!");
 
     await dispatch(
       addToCart(
@@ -108,7 +122,6 @@ export default function ProductDetailsPage() {
         cleanString(selectedStorage)
       )
     );
-    toast.success("Item added to cart successfully!");
   };
 
   const averageRating =
@@ -116,7 +129,6 @@ export default function ProductDetailsPage() {
       ? review.reduce((sum, r) => sum + (r.rating ?? 0), 0) / review.length
       : 0;
   const roundedRating = Math.round(averageRating);
-
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -189,10 +201,31 @@ export default function ProductDetailsPage() {
             | Total Stock: {product.totalStock}
           </p>
 
-          {[{ label: "RAM", items: product.RAM, selected: selectedRAM, set: setSelectedRAM },
-            { label: "Storage", items: product.ROM, selected: selectedStorage, set: setSelectedStorage },
-            { label: "Color", items: product.color, selected: selectedColor, set: setSelectedColor },
-            { label: "Size", items: product.size, selected: selectedSize, set: setSelectedSize }
+          {[
+            {
+              label: "RAM",
+              items: product.RAM,
+              selected: selectedRAM,
+              set: setSelectedRAM,
+            },
+            {
+              label: "Storage",
+              items: product.ROM,
+              selected: selectedStorage,
+              set: setSelectedStorage,
+            },
+            {
+              label: "Color",
+              items: product.color,
+              selected: selectedColor,
+              set: setSelectedColor,
+            },
+            {
+              label: "Size",
+              items: product.size,
+              selected: selectedSize,
+              set: setSelectedSize,
+            },
           ].map(({ label, items, selected, set }) => (
             <div key={label} className="space-y-2">
               <label className="block font-medium">Select {label}</label>
@@ -270,7 +303,9 @@ export default function ProductDetailsPage() {
         <div className="mt-8 bg-white rounded-lg shadow p-6 prose max-w-none text-gray-700">
           {activeTab === "description" && (
             <>
-              <h3 className="text-xl font-semibold mb-4">Product Description</h3>
+              <h3 className="text-xl font-semibold mb-4">
+                Product Description
+              </h3>
               {product.description.map((desc, idx) => (
                 <p key={idx}>{desc}</p>
               ))}
@@ -297,11 +332,7 @@ export default function ProductDetailsPage() {
             </>
           )}
           {activeTab === "review" && (
-            <Review
-              key={product.id}
-              productId={product.id}
-             
-            />
+            <Review key={product.id} productId={product.id} />
           )}
         </div>
       </div>

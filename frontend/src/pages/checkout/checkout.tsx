@@ -3,8 +3,9 @@ import { useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import toast from "react-hot-toast";
 import { postOrderItem } from "../../store/orderSlice";
+import { useNavigate } from "react-router-dom";
 
- enum PaymentMethod {
+enum PaymentMethod {
   Khalti = "khalti",
   Esewa = "esewa",
   COD = "cod",
@@ -44,7 +45,7 @@ function Checkout() {
     lastName: "",
     addressLine: "",
     city: "",
-    state: "", 
+    state: "",
     street: "",
     zipcode: "",
     email: "",
@@ -116,20 +117,9 @@ function Checkout() {
       products: productData,
       totalPrice: total,
     };
-     await dispatch(postOrderItem(finalData));
-       toast.error("Order created successfully", {
-        duration: 3000,
-        position: "top-center",
-        style: {
-          background: "#dc2626",
-          color: "green",
-          padding: "12px 16px",
-          borderRadius: "8px",
-        },
-      });
-    
+    toast.success("Order is successfully created!");
 
-    
+    await dispatch(postOrderItem(finalData));
   };
 
   return (

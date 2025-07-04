@@ -80,7 +80,7 @@ const Navbar = () => {
           </div>
           <div className="flex items-center gap-4 mt-2 sm:mt-0">
             <Link
-              to="/track-order"
+              to="/my-orders"
               className="hover:text-gray-900 transition-colors"
             >
               Track Order
@@ -138,12 +138,7 @@ const Navbar = () => {
               >
                 Ultrabooks
               </Link>
-              <Link
-                to="/deals"
-                className="text-sm font-medium text-red-600 hover:text-red-700 transition-colors"
-              >
-                🔥 Hot Deals
-              </Link>
+            
               <Link
                 to="/my-orders"
                 className="text-sm font-medium hover:text-blue-600 transition-colors"
