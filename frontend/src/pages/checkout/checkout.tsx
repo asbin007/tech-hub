@@ -3,12 +3,11 @@ import { useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import toast from "react-hot-toast";
 import { postOrderItem } from "../../store/orderSlice";
-import { useNavigate } from "react-router-dom";
 
 enum PaymentMethod {
   Khalti = "khalti",
   Esewa = "esewa",
-  COD = "cod",
+  Cod = "cod",
 }
 
 export interface IData {
@@ -25,7 +24,7 @@ export interface IData {
   paymentMethod: PaymentMethod;
   products: {
     productId: string;
-    productQty: number;
+    quantity: number;
   }[];
 }
 
@@ -51,12 +50,12 @@ function Checkout() {
     email: "",
     phoneNumber: "",
     totalPrice: 0,
-    paymentMethod: PaymentMethod.COD,
+    paymentMethod: PaymentMethod.Cod,
     products: [],
   });
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
-    PaymentMethod.COD
+    PaymentMethod.Cod
   );
 
   const handlePaymentMethod = (paymentData: PaymentMethod) => {
@@ -109,7 +108,7 @@ function Checkout() {
 
     const productData = data.map((cartItem) => ({
       productId: cartItem.Product.id,
-      productQty: cartItem.quantity,
+      quantity: cartItem.quantity,
     }));
 
     const finalData: IData = {
@@ -272,7 +271,7 @@ function Checkout() {
                     className="mt-1 px-4 py-2 rounded-md bg-gray-100 text-sm w-full"
                     value={paymentMethod}
                   >
-                    <option value={PaymentMethod.COD}>COD</option>
+                                         <option value={PaymentMethod.Cod}>COD</option>
                     <option value={PaymentMethod.Khalti}>Khalti</option>
                     <option value={PaymentMethod.Esewa}>Esewa</option>
                   </select>
@@ -281,7 +280,7 @@ function Checkout() {
 
               {/* Submit Button */}
               <div className="flex gap-4 max-md:flex-col mt-8">
-                {paymentMethod === PaymentMethod.COD && (
+                                 {paymentMethod === PaymentMethod.Cod && (
                   <button
                     type="submit"
                     className="rounded-md px-4 py-2.5 w-full text-sm bg-blue-600 hover:bg-blue-700 text-white"

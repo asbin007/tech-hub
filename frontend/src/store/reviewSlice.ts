@@ -7,13 +7,14 @@ interface user {
   id: string | null;
   username: string | null;
 }
- interface IData {
+export interface IData {
   id: string | null;
   productId: string | null;
   userId: string | null;
   comment: string | null;
   rating: number | null;
   createdAt: string | null;
+  updatedAt: string | null;
   User: user;
 }
 export interface IReview {

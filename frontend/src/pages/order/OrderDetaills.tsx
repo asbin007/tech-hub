@@ -179,7 +179,7 @@ export default function OrderDetailsPage() {
     if (!id) return;
     setIsLoading(true);
     try {
-      await dispatch(cancelOrderAPI(id)).unwrap();
+      await dispatch(cancelOrderAPI(id));
       setToast({ message: "Order cancelled successfully", type: "success" });
       setIsCancelModalOpen(false);
       dispatch(fetchMyOrderDetails(id)).then(() => {

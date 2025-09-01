@@ -4,7 +4,7 @@ import { Award, Clock, Zap } from 'lucide-react';
 const NewsletterSection = () => {
   const [email, setEmail] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Subscribed with email:', email);
     setEmail('');

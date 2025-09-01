@@ -54,7 +54,10 @@ export interface IData {
   email: string;
   totalPrice: number;
   paymentMethod: PaymentMethod;
-  products: IProduct[];
+  products: {
+    productId: string;
+    quantity: number;
+  }[];
 }
 
 const initialState: IOrder = {

@@ -1,13 +1,11 @@
 import type { ChangeEvent, FormEvent } from "react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { useAppDispatch } from "../../store/hooks";
 import { forgotPassword } from "../../store/authSlice";
-import { Status } from "../../globals/types/types";
 
 const ForgotPassword = () => {
   const dispatch = useAppDispatch();
-  const { status } = useAppSelector((store) => store.auth);
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
 
@@ -17,7 +15,7 @@ const ForgotPassword = () => {
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    dispatch(forgotPassword({ email }));
+    dispatch(forgotPassword({ email, otp: "" }));
     setEmail(""); 
     navigate("/reset-password");
     

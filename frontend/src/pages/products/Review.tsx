@@ -9,20 +9,7 @@ import {
   editReview,
 } from "../../store/reviewSlice";
 import toast from "react-hot-toast";
-
-interface ReviewItem {
-  id: string;
-  rating: number;
-  comment: string;
-  userId: string;
-  productId: string;
-  createdAt: string;
-  updatedAt: string;
-  User?: {
-    id: string;
-    username: string;
-  } | null;
-}
+import type { IData } from "../../store/reviewSlice";
 
 interface ReviewProps {
   productId: string;
@@ -84,6 +71,7 @@ const Review: React.FC<ReviewProps> = ({ productId }) => {
         id: "",
         userId: currentUserId,
         createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
         User: { id: currentUserId, username: "" },
       })
     );
@@ -115,15 +103,15 @@ const Review: React.FC<ReviewProps> = ({ productId }) => {
     }
   };
 
-  const handleEdit = (item: ReviewItem) => {
+  const handleEdit = (item: IData) => {
     if (item.userId !== currentUserId) {
       toast.error("Unauthorized to edit this review.");
       return;
     }
 
-    setEditReviewId(item.id);
-    setEditComment(item.comment);
-    setEditRating(item.rating);
+    setEditReviewId(item.id || "");
+    setEditComment(item.comment || "");
+    setEditRating(item.rating || 0);
     setEditModalOpen(true);
     setDropdownOpen(null);
   };

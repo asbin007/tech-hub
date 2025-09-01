@@ -27,7 +27,7 @@ const Navbar = () => {
     }
   }, [reduxToken, dispatch]);
 
-  const handleCartClick = (e) => {
+  const handleCartClick = (e: React.MouseEvent) => {
     if (!isLogin) {
       e.preventDefault();
       toast.error("Please log in to view your cart", {

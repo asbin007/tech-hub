@@ -1,5 +1,4 @@
 import { Gamepad2, Laptop, Monitor, Smartphone } from 'lucide-react';
-import { href } from 'react-router-dom';
 
 export const featuredProducts = [
   {
